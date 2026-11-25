@@ -8,6 +8,8 @@
 - Versioned local inference, single and batch APIs, analytics, a Streamlit dashboard, test coverage, Docker image and Compose configuration.
 - DuckDB queries for incident summary, category rank, temporal trends, manufacturers and review-sample confidence distributions.
 
+The final clean checkout passed all 17 pytest tests on Python 3.13, plus Ruff and dependency checks. One existing Starlette test-client deprecation warning remains. Hosted CI has yet to run. The tracked files passed a credential signature scan and 41 internal Markdown links resolved.
+
 The architecture and endpoints are documented in [architecture](ARCHITECTURE.md) and [deployment](DEPLOYMENT.md). For experiment results and interpretation, see [evaluation](MODEL_EVALUATION.md).
 
 ## Implemented but not verified
@@ -35,6 +37,6 @@ The architecture and endpoints are documented in [architecture](ARCHITECTURE.md)
 
 ## Publication
 
-The release branch is prepared locally. The separate GitHub repository is intended to remain private and empty pending explicit approval to upload and publish the code. The original repository is the read-only research reference.
+The release branch is prepared locally. The separate [GitHub repository](https://github.com/youssefrafik6/RecallGuard-V2) was created and verified as private with no Git refs. Code remains local pending explicit publication approval. The original repository's GitHub main was verified at the same commit, `b721216`, before and after V2 implementation.
 
 Public release is gated on approval. Any future raw or derived dataset distribution requires its own rights and privacy review. No such payload is included in the release branch.
