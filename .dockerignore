@@ -1,0 +1,12 @@
+**
+!pyproject.toml
+!requirements.txt
+!src/
+!src/**
+!dashboard/
+!dashboard/app.py
+!.streamlit/
+!.streamlit/config.toml
+src/**/__pycache__/
+src/**/*.pyc
+src/*.egg-info/

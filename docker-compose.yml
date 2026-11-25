@@ -1,0 +1,31 @@
+x-runtime: &runtime
+  build: .
+  image: recallguard-v2:local
+  environment:
+    RECALLGUARD_DATA: ${RECALLGUARD_DATA:-}
+    RECALLGUARD_MODEL: ${RECALLGUARD_MODEL:-}
+    RECALLGUARD_WORKSPACE: /workspace
+  volumes:
+    - ./:/workspace:ro
+
+services:
+  api:
+    <<: *runtime
+    ports:
+      - "127.0.0.1:8000:8000"
+  dashboard:
+    <<: *runtime
+    command: ["streamlit", "run", "dashboard/app.py", "--server.address=0.0.0.0", "--server.headless=true"]
+    ports:
+      - "127.0.0.1:8501:8501"
+    volumes:
+      - ./:/workspace:ro
+      - reviews:/home/recallguard
+    environment:
+      RECALLGUARD_DATA: ${RECALLGUARD_DATA:-}
+      RECALLGUARD_MODEL: ${RECALLGUARD_MODEL:-}
+      RECALLGUARD_WORKSPACE: /workspace
+      RECALLGUARD_REVIEWS: /home/recallguard/reviews.sqlite
+
+volumes:
+  reviews:

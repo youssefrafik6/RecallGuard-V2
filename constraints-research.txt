@@ -1,0 +1,9 @@
+# Core environment used for the Apple Silicon Python 3.13 benchmarks.
+numpy==2.2.3
+pandas==2.2.3
+scipy==1.18.1
+scikit-learn==1.9.1
+joblib==1.6.0
+xgboost==3.4.1
+duckdb==2.0.1
+rapidfuzz==3.14.6
