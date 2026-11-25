@@ -52,10 +52,39 @@ recallguard audit-temporal --data data/training_data.csv --group-campaigns
 
 See the [evaluation report](docs/MODEL_EVALUATION.md) for verified metrics and the MiniLM/TF-IDF benchmark commands.
 
+## Verified V2 results
+
+| Held-out design | F1 | Average precision |
+| --- | ---: | ---: |
+| Random rows | 0.562 | 0.551 |
+| Campaign-aware product groups | 0.174 | 0.123 |
+| Chronological with campaign purging | 0.098 | 0.111 |
+
+The temporal AP was below the 0.128 test positive rate. The validation-selected operating point recovered eight of 97 positives. The separate MiniLM probe improved F1 over word TF-IDF at its chosen threshold (0.233 versus 0.208), with lower AP and substantially higher CPU cost. See [V2 evaluation](docs/MODEL_EVALUATION.md) and [historical results](docs/V1_TO_V2_COMPARISON.md#historical-metric-provenance).
+
+## Dashboard
+
+![RecallGuard V2 overview showing aggregate research statistics](screenshots/overview.png)
+
+[Model performance dashboard](screenshots/model-performance.png)
+
 ## API and containers
 
 Run `uvicorn recallguard.api:app --host 127.0.0.1` and visit `/docs` for the API schema. Run `docker compose up --build` to launch both services. The [deployment guide](docs/DEPLOYMENT.md) includes requests, model mounting and operator controls.
 
+## Project layout
+
+| Path | Contents |
+| --- | --- |
+| `src/recallguard/` | Data validation, linkage, features, training, evaluation, inference, analytics and API |
+| `dashboard/` | Streamlit interface |
+| `scripts/` | Optional CPU MiniLM and TF-IDF benchmark |
+| `results/metrics/` | Historical and V2 aggregate experiment reports |
+| `docs/` | Data terms, deployment, comparison, limitations and interview material |
+| `tests/` | Synthetic unit, API and dashboard tests |
+
 ## Interpretation
 
 The score describes retrospective association with historical linkage labels. It does not estimate actual hazard or future recall probability. A prospective study needs publication-time snapshots, independent label adjudication and a fresh time period with mature outcomes. See [limitations](docs/LIMITATIONS.md), the [implementation report](docs/IMPLEMENTATION_SUMMARY.md), and the [MIT license](LICENSE).
+
+Future work includes blinded review of ambiguous pairs, a mature publication-time cohort, and validation on a new period before any external deployment.

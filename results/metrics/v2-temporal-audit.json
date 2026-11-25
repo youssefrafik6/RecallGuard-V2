@@ -1,0 +1,115 @@
+{
+  "group_campaigns": true,
+  "test_positives_sharing_earlier_positive_campaign": 0,
+  "partitions": {
+    "train": {
+      "rows": 1269,
+      "positives": 23,
+      "positive_rate": 0.018124507486209612,
+      "start": "2011-03-11",
+      "end": "2015-12-05",
+      "token_occurrence_oov_rate": 0.0,
+      "unseen_nonblank_manufacturer_rows": 0,
+      "category_total_variation": 0.0,
+      "manufacturer_total_variation": 0.0,
+      "blank_model_rows": 193,
+      "blank_upc_rows": 1065,
+      "recall_term_rows": 240,
+      "publication_lag_median_days": 25.0,
+      "positive_campaigns": 20,
+      "positive_reports_in_top_three_campaigns": 6,
+      "positive_link_rules": {
+        "exact_model_plus_brand_or_manufacturer": 12,
+        "model_only": 9,
+        "one_token_brand_category": 2
+      },
+      "positive_confidence": {
+        "high": 12,
+        "medium": 11
+      }
+    },
+    "validation": {
+      "rows": 626,
+      "positives": 31,
+      "positive_rate": 0.04952076677316294,
+      "start": "2015-12-07",
+      "end": "2019-07-05",
+      "token_occurrence_oov_rate": 0.05032980500054066,
+      "unseen_nonblank_manufacturer_rows": 265,
+      "category_total_variation": 0.14635306913194207,
+      "manufacturer_total_variation": 0.5951341525741634,
+      "blank_model_rows": 102,
+      "blank_upc_rows": 516,
+      "recall_term_rows": 98,
+      "publication_lag_median_days": 31.0,
+      "positive_campaigns": 21,
+      "positive_reports_in_top_three_campaigns": 9,
+      "positive_link_rules": {
+        "exact_model_plus_brand_or_manufacturer": 25,
+        "model_only": 6
+      },
+      "positive_confidence": {
+        "high": 25,
+        "medium": 6
+      }
+    },
+    "calibration": {
+      "rows": 653,
+      "positives": 58,
+      "positive_rate": 0.0888208269525268,
+      "start": "2019-07-08",
+      "end": "2023-01-12",
+      "token_occurrence_oov_rate": 0.06014009686995469,
+      "unseen_nonblank_manufacturer_rows": 344,
+      "category_total_variation": 0.09965281171823806,
+      "manufacturer_total_variation": 0.7011972384231353,
+      "blank_model_rows": 100,
+      "blank_upc_rows": 476,
+      "recall_term_rows": 58,
+      "publication_lag_median_days": 29.0,
+      "positive_campaigns": 37,
+      "positive_reports_in_top_three_campaigns": 24,
+      "positive_link_rules": {
+        "exact_model_plus_brand_or_manufacturer": 35,
+        "model_only": 12,
+        "exact_upc": 6,
+        "one_token_brand_category": 3,
+        "two_or_more_tokens_plus_context": 2
+      },
+      "positive_confidence": {
+        "high": 43,
+        "medium": 15
+      }
+    },
+    "test": {
+      "rows": 756,
+      "positives": 97,
+      "positive_rate": 0.1283068783068783,
+      "start": "2023-01-19",
+      "end": "2025-12-30",
+      "token_occurrence_oov_rate": 0.06424331225287926,
+      "unseen_nonblank_manufacturer_rows": 424,
+      "category_total_variation": 0.09670156478667113,
+      "manufacturer_total_variation": 0.7612293144208038,
+      "blank_model_rows": 103,
+      "blank_upc_rows": 530,
+      "recall_term_rows": 83,
+      "publication_lag_median_days": 20.0,
+      "positive_campaigns": 46,
+      "positive_reports_in_top_three_campaigns": 28,
+      "positive_link_rules": {
+        "exact_model_plus_brand_or_manufacturer": 79,
+        "model_only": 14,
+        "one_token_brand_category": 2,
+        "two_or_more_tokens_plus_context": 1,
+        "exact_upc": 1
+      },
+      "positive_confidence": {
+        "high": 81,
+        "medium": 16
+      }
+    }
+  },
+  "test_rows_sharing_earlier_campaign": 0,
+  "excluded_rows": 476
+}

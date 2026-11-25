@@ -134,3 +134,29 @@ def test_linkage_rank_and_review_history(tmp_path):
             "SELECT report_id, decision FROM decisions ORDER BY id"
         ).fetchall() == [("0001", "uncertain"), ("0001", "match")]
     assert top.confidence == "high"
+
+
+def test_dashboard_saves_review(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    from streamlit.testing.v1 import AppTest
+
+    candidates = tmp_path / "review.csv"
+    candidates.write_text("report_id,recall_id,confidence\n0001,002,review\n")
+    reviews = tmp_path / "reviews.sqlite"
+    monkeypatch.setenv("RECALLGUARD_CANDIDATES", str(candidates))
+    monkeypatch.setenv("RECALLGUARD_REVIEWS", str(reviews))
+    monkeypatch.delenv("RECALLGUARD_DATA", raising=False)
+    monkeypatch.delenv("RECALLGUARD_MODEL", raising=False)
+    entry = Path(__file__).resolve().parents[1] / "dashboard" / "app.py"
+    ui = AppTest.from_file(str(entry), default_timeout=30).run()
+    ui.sidebar.radio[0].set_value("Record linkage").run()
+    assert not ui.exception
+    ui.text_input[0].set_value("Test reviewer")
+    ui.selectbox[2].set_value("match")
+    ui.button[0].click().run()
+    assert not ui.exception
+    with sqlite3.connect(reviews) as connection:
+        assert connection.execute(
+            "SELECT report_id, recall_id, decision FROM decisions"
+        ).fetchone() == ("0001", "002", "match")

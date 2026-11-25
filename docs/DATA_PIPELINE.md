@@ -44,3 +44,11 @@ V2 preserves existing date and identifier confidence rules and adds normalized e
 The dashboard displays a stratified candidate sample. SQLite `decisions` stores report and recall IDs, candidate snapshot SHA-256, decision, reviewer, optional note and UTC timestamp. Decisions append independently of generated labels. Training uses a separately supplied historical CSV.
 
 DuckDB's `incidents` relation uses `report_date`, `category`, `manufacturer` and nullable binary `label_recalled`. Its `candidates` relation uses `report_id` and `confidence`. Dashboard confidence counts describe the review sample. CLI summaries cover the full run. The supported inputs lack a validated severity field.
+
+## Verified V2 replay
+
+V2 processed 65,058 cleaned incident reports and 9,623 cleaned recall records. It generated 1,144,551 candidate pairs against approximately 626 million possible Cartesian pairs. Among these candidates, 148 received high confidence and 207 received review status. High-confidence uniqueness yielded 146 proxy positives, with competing high candidates kept unresolved.
+
+Of 416 prior reference pairs, 207 fell inside the date gate. V2 surfaced 204 of these 207 date-eligible pairs, including 158 at rank 1 and 180 in the top three. Three were absent from the shortlist. Of the surfaced eligible reference pairs, 115 received high confidence, 18 received review status and 71 were rejected by the confidence rules. The replay measures agreement with historical candidate references and therefore cannot estimate the rate of false matches or missed true matches. The input and reference hashes agree with the archived identifier-aware run.
+
+[Aggregate V2 replay](../results/metrics/v2-linkage.json) · [Historical identifier-aware replay](../results/metrics/linkage_reference_benchmark.json)

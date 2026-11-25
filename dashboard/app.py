@@ -134,7 +134,17 @@ if page == "Overview":
         middle.metric("Recall-linked labels", f"{summary.linked_reports:,}")
         right.metric("Linked share", f"{data[TARGET].mean():.1%}")
     st.graphviz_chart(
-        "digraph { CPSC -> Linkage -> Review; HistoricalLabels -> Evaluation -> Model; Model -> API; Model -> Dashboard }"
+        """
+        digraph {
+            rankdir=LR;
+            bgcolor="transparent";
+            node [shape=box, style="rounded,filled", color="#76A8A5",
+                  fillcolor="#F0F6F5", fontcolor="#173039", fontname="Helvetica"];
+            edge [color="#086D6A"];
+            "CPSC exports" -> "Ranked candidates" -> "Review ledger";
+            "Historical labels" -> "Offline evaluation" -> "Model artifact" -> "API and dashboard";
+        }
+        """
     )
     st.subheader("From public reports to review priorities")
     st.write(
@@ -143,7 +153,7 @@ if page == "Overview":
     )
     st.info(
         "The original capstone cites about 39,946 incident reports and 9,666 recall records. "
-        "The figures above describe its checked-in labeled subset."
+        "The historical labeled subset was sampled for the original analysis."
     )
     if bundle:
         metadata = bundle["metadata"]
