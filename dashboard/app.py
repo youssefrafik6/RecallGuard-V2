@@ -151,9 +151,7 @@ if page == "Overview":
         "CPSC incident reports and recall listings have no shared product identifier. "
         "RecallGuard shows how candidate links create labels and how a classifier ranks historical associations."
     )
-    st.info(
-        "Model evaluation uses a labeled sample of the CPSC records."
-    )
+    st.info("Model evaluation uses a labeled sample of the CPSC records.")
     if bundle:
         metadata = bundle["metadata"]
         report = metadata["comparison"][metadata["selected"]]
