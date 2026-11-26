@@ -1,9 +1,5 @@
 # RecallGuard V2
 
-**NLP and record linkage for historical consumer product recall analysis**
-
-Youssef Rafik · Based on a Southern Connecticut State University Data Science capstone
-
 Consumer incident reports and official recall listings lack a shared product ID. RecallGuard V2 ranks candidate links for review and evaluates how well NLP models rank historical recall associations. The local Streamlit dashboard and FastAPI API share validation and inference.
 
 ```mermaid
@@ -18,9 +14,9 @@ flowchart LR
     H --> A
 ```
 
-## What changed
+## Features
 
-V1 combined exploration and model fitting in a Streamlit app. V2 moves training offline, separates supervised data from candidate review, supports timed and group-aware evaluation, and serves versioned artifacts. See the [V1 audit and comparison](docs/V1_TO_V2_COMPARISON.md).
+Training runs offline. Candidate review is separate from supervised evaluation and inference. See the [architecture](docs/ARCHITECTURE.md) for component boundaries and the [version comparison](docs/V1_TO_V2_COMPARISON.md) for research provenance.
 
 - **Record linkage** uses rare-token blocks, exact model codes, checksum-valid GTINs, RapidFuzz and sparse TF-IDF. The audit records evidence, date eligibility and rank.
 - **ML experiments** compare Dummy, logistic regression, Linear SVM, Complement NB and XGBoost. A CPU MiniLM experiment shares a campaign-purged split with a word TF-IDF comparator.
@@ -52,7 +48,7 @@ recallguard audit-temporal --data data/training_data.csv --group-campaigns
 
 See the [evaluation report](docs/MODEL_EVALUATION.md) for verified metrics and the MiniLM/TF-IDF benchmark commands.
 
-## Verified V2 results
+## Held-out results
 
 | Held-out design | F1 | Average precision |
 | --- | ---: | ---: |
@@ -84,7 +80,7 @@ Run `uvicorn recallguard.api:app --host 127.0.0.1` and visit `/docs` for the API
 | `dashboard/` | Streamlit interface |
 | `scripts/` | Optional CPU MiniLM and TF-IDF benchmark |
 | `results/metrics/` | Historical and V2 aggregate experiment reports |
-| `docs/` | Data terms, deployment, comparison, limitations and evaluation details |
+| `docs/` | Data terms, deployment, comparison, and limitations |
 | `tests/` | Synthetic unit, API and dashboard tests |
 
 ## Interpretation

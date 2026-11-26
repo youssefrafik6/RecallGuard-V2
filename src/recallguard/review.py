@@ -13,7 +13,9 @@ class ReviewDecision(BaseModel):
     report_id: str = Field(min_length=1, max_length=240)
     recall_id: str = Field(min_length=1, max_length=240)
     decision: Literal["match", "non_match", "uncertain"]
-    reviewer: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
+    reviewer: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)
+    ]
     note: str = Field(default="", max_length=1000)
 
 
