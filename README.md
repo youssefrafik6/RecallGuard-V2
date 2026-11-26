@@ -76,7 +76,7 @@ Run `uvicorn recallguard.api:app --host 127.0.0.1` and visit `/docs` for the API
 | `dashboard/` | Streamlit interface |
 | `scripts/` | Optional CPU MiniLM and TF-IDF benchmark |
 | `results/metrics/` | Historical and V2 aggregate experiment reports |
-| `docs/` | Data terms, deployment, comparison, limitations and interview material |
+| `docs/` | Data terms, deployment, comparison, and limitations |
 | `tests/` | Synthetic unit, API and dashboard tests |
 
 ## Interpretation
