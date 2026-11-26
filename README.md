@@ -1,6 +1,6 @@
 # RecallGuard V2
 
-**Consumer Product Safety Intelligence Platform**
+**NLP and record linkage for historical consumer product recall analysis**
 
 Youssef Rafik · Based on a Southern Connecticut State University Data Science capstone
 

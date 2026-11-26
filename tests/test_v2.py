@@ -5,6 +5,7 @@ from io import BytesIO
 
 import pandas as pd
 import pytest
+from pydantic import ValidationError
 from fastapi.testclient import TestClient
 
 from recallguard.analytics import aggregate
@@ -134,6 +135,13 @@ def test_linkage_rank_and_review_history(tmp_path):
             "SELECT report_id, decision FROM decisions ORDER BY id"
         ).fetchall() == [("0001", "uncertain"), ("0001", "match")]
     assert top.confidence == "high"
+
+
+def test_review_requires_nonblank_reviewer():
+    payload = dict(snapshot="a" * 64, report_id="001", recall_id="002", decision="uncertain")
+    with pytest.raises(ValidationError, match="reviewer"):
+        ReviewDecision(**payload, reviewer="  ")
+    assert ReviewDecision(**payload, reviewer=" Reviewer ").reviewer == "Reviewer"
 
 
 def test_dashboard_saves_review(tmp_path, monkeypatch):
