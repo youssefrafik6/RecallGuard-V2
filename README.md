@@ -62,6 +62,10 @@ See the [evaluation report](docs/MODEL_EVALUATION.md) for verified metrics and t
 
 The temporal AP was below the 0.128 test positive rate. The validation-selected operating point recovered eight of 97 positives. The separate MiniLM probe improved F1 over word TF-IDF at its chosen threshold (0.233 versus 0.208), with lower AP and substantially higher CPU cost. See [V2 evaluation](docs/MODEL_EVALUATION.md) and [historical results](docs/V1_TO_V2_COMPARISON.md#historical-metric-provenance).
 
+## Interpreting the association score
+
+The training target indicates a historical record link. It does not establish whether a product would be recalled after a new incident. Candidate links require review, and a missing link can reflect incomplete records. The chronological test is closest to the intended ordering of events. Its average precision was 0.111 against a positive rate of 0.128, which limits the evidence for prospective use. The dashboard score helps inspect historical model behavior.
+
 ## Dashboard
 
 ![RecallGuard V2 overview showing aggregate research statistics](screenshots/overview.png)
@@ -80,7 +84,7 @@ Run `uvicorn recallguard.api:app --host 127.0.0.1` and visit `/docs` for the API
 | `dashboard/` | Streamlit interface |
 | `scripts/` | Optional CPU MiniLM and TF-IDF benchmark |
 | `results/metrics/` | Historical and V2 aggregate experiment reports |
-| `docs/` | Data terms, deployment, comparison, limitations and interview material |
+| `docs/` | Data terms, deployment, comparison, limitations and evaluation details |
 | `tests/` | Synthetic unit, API and dashboard tests |
 
 ## Interpretation
