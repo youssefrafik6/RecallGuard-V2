@@ -4,27 +4,15 @@
 
 Youssef Rafik · Based on a Southern Connecticut State University Data Science capstone
 
-Consumer incident reports and official recall listings lack a shared product ID. RecallGuard V2 ranks candidate links for review and evaluates how well NLP models rank historical recall associations. The local Streamlit dashboard and FastAPI API share validation and inference.
+RecallGuard V2 ranks candidate links between official CPSC incident reports and recalls. Streamlit shows aggregate snapshot results and an interactive linkage example. Historical model artifacts and FastAPI scoring remain available for benchmark comparison.
 
 ```mermaid
 flowchart LR
-    R[CPSC incident and recall exports] --> L[Normalize and block candidates]
-    L --> H[Rank evidence and record reviews]
-    C[Historical labeled CSV] --> S[Train, validate, calibrate and test]
-    S --> M[Trusted local model bundle]
-    C --> Q[DuckDB aggregations]
-    M --> A[FastAPI and Streamlit]
-    Q --> A
-    H --> A
+    R[Official CPSC exports] --> L[Normalize and rank candidates]
+    L --> H[Local evidence and review]
+    L --> A[Aggregate snapshot dashboard]
+    C[Historical labeled CSV] --> S[Historical benchmarks]
 ```
-
-## What changed
-
-V1 combined exploration and model fitting in a Streamlit app. V2 moves training offline, separates supervised data from candidate review, supports timed and group-aware evaluation, and serves versioned artifacts. See the [V1 audit and comparison](docs/V1_TO_V2_COMPARISON.md).
-
-- **Record linkage** uses rare-token blocks, exact model codes, checksum-valid GTINs, RapidFuzz and sparse TF-IDF. The audit records evidence, date eligibility and rank.
-- **ML experiments** compare Dummy, logistic regression, Linear SVM, Complement NB and XGBoost. A CPU MiniLM experiment shares a campaign-purged split with a word TF-IDF comparator.
-- **Serving** combines typed single and batch predictions, DuckDB aggregates, local model contributions and eight dashboard views.
 
 ## Quick start
 
@@ -36,23 +24,15 @@ pytest -q
 streamlit run dashboard/app.py
 ```
 
-Set `RECALLGUARD_DATA` and `RECALLGUARD_MODEL` when you have the local CSV and trusted model bundle. The dashboard includes a clearly labeled synthetic linkage example. See [data sources and handling](docs/DATA_PIPELINE.md).
+The default dashboard uses bundled aggregate counts and a fictional candidate example. To inspect a newly processed snapshot, set `RECALLGUARD_SUMMARY` to its `summary.json`. Follow the [official download and processing instructions](docs/DATA_PIPELINE.md).
 
-## Reproduce evaluation
+## Official CPSC snapshot
 
-```bash
-recallguard prepare --incidents data/raw/IncidentReports.csv \
-  --recalls data/raw/recalls_recall_listing.csv --out data/processed
-recallguard check-linkage --candidates data/processed/candidates.csv \
-  --reference /path/to/historical-match-audit.csv
-recallguard train --data data/training_data.csv --design all \
-  --feature-set compare --group-campaigns
-recallguard audit-temporal --data data/training_data.csv --group-campaigns
-```
+The raw exports provide no independently verified positive or negative outcome labels. The rebuild produces reviewable heuristic links and leaves unresolved reports unlabeled. See the [snapshot report](docs/CPSC_SNAPSHOT_REPORT.md) for measured counts, historical candidate agreement, and the evaluation decision.
 
-See the [evaluation report](docs/MODEL_EVALUATION.md) for verified metrics and the MiniLM/TF-IDF benchmark commands.
+## Historical benchmarks
 
-## Verified V2 results
+The following results were measured on the old sampled proxy labels in `training_data.csv`. Reproduction commands and holdout details are in the [historical model evaluation](docs/MODEL_EVALUATION.md).
 
 | Held-out design | F1 | Average precision |
 | --- | ---: | ---: |
@@ -61,12 +41,6 @@ See the [evaluation report](docs/MODEL_EVALUATION.md) for verified metrics and t
 | Chronological with campaign purging | 0.098 | 0.111 |
 
 The temporal AP was below the 0.128 test positive rate. The validation-selected operating point recovered eight of 97 positives. The separate MiniLM probe improved F1 over word TF-IDF at its chosen threshold (0.233 versus 0.208), with lower AP and substantially higher CPU cost. See [V2 evaluation](docs/MODEL_EVALUATION.md) and [historical results](docs/V1_TO_V2_COMPARISON.md#historical-metric-provenance).
-
-## Dashboard
-
-![RecallGuard V2 overview showing aggregate research statistics](screenshots/overview.png)
-
-[Model performance dashboard](screenshots/model-performance.png)
 
 ## API and containers
 

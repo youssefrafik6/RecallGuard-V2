@@ -1,7 +1,5 @@
 # Local data
 
-Place your operator-supplied historical CSV at `data/training_data.csv` or pass
-`--data`. Put source incident and recall exports in `data/raw/`. Generated
-candidate pairs, review samples, and local decision history live under
-`data/processed/`. These files may contain identifiers and free text.
-See [data processing and terms](../docs/DATA_PIPELINE.md).
+Store the official CPSC downloads in `data/raw/`. Run `recallguard prepare-raw` into a new directory beneath `data/` for each snapshot. Keep record-level candidate and review outputs local. The Streamlit demo can use the aggregate `summary.json` from any completed snapshot.
+
+`data/training_data.csv` remains an operator-supplied input for historical benchmark reproduction. See the [data pipeline](../docs/DATA_PIPELINE.md).
