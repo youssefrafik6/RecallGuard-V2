@@ -152,8 +152,7 @@ if page == "Overview":
         "RecallGuard shows how candidate links create labels and how a classifier ranks historical associations."
     )
     st.info(
-        "The original capstone cites about 39,946 incident reports and 9,666 recall records. "
-        "The historical labeled subset was sampled for the original analysis."
+        "Model evaluation uses a labeled sample of the CPSC records."
     )
     if bundle:
         metadata = bundle["metadata"]
@@ -273,11 +272,10 @@ elif page == "Record linkage":
                         )
 
 elif page == "About":
-    st.subheader("Youssef Rafik · Southern Connecticut State University")
+    st.subheader("About RecallGuard V2")
     st.write(
-        "Bachelor of Science in Data Science capstone, Spring 2026. The original project "
-        "connected public incident reports to official recall listings and compared NLP classifiers. "
-        "V2 adds reproducible split comparisons, candidate review, local model artifacts, DuckDB analytics and a shared API."
+        "Review candidate links between incident reports and recalls, compare validation splits, "
+        "and explore historical associations using local model artifacts and DuckDB aggregates."
     )
     st.write("Python · pandas · scikit-learn · XGBoost · DuckDB · Streamlit · FastAPI")
     st.markdown("[CPSC data sources](https://www.cpsc.gov/Data)")
