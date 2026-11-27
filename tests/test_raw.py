@@ -142,7 +142,7 @@ def test_dashboard_uses_only_aggregates_by_default(tmp_path, source_files, monke
     assert not ui.exception
     ui.sidebar.radio[0].set_value("Record linkage").run()
     assert not ui.exception
-    assert len(ui.dataframe) == 1
+    assert len(ui.dataframe) == 2
     assert "PRIVATE-ID" not in ui.dataframe[0].value.to_string()
     assert "high" in ui.dataframe[0].value["confidence"].values
     ui.slider[0].set_value(15).run()

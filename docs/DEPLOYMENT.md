@@ -43,3 +43,21 @@ docker run --rm --user "$(id -u):$(id -g)" \
 ```
 
 The serving UID needs read access to the trusted bundle. Joblib uses executable deserialization. Load bundles only from a trusted operator's training run. External hosting would require authentication, request limits, review roles and a data redistribution review.
+
+## Streamlit Community Cloud
+
+The public entry point is `dashboard/public.py`. It uses the tracked aggregate snapshot and archived model metrics. The public path ignores local workspace, model, data, candidate and SQLite overrides. It has no upload or review form. Use `dashboard/app.py` for trusted private local analysis.
+
+1. Open [Streamlit Community Cloud](https://share.streamlit.io/) and connect the GitHub account with access to the repository.
+2. Choose **Create app**, then **Deploy from repo**. Use repository `youssefrafik6/RecallGuard-V2`, branch `main` after the portfolio pull request is merged, and file `dashboard/public.py`. To preview the unmerged changes, select `codex/portfolio-demo-validation` instead.
+3. In **Advanced settings**, select **Python 3.13** or **Python 3.14**. Leave Secrets empty. Community Cloud loads the pinned `dashboard/requirements.txt` adjacent to the entry point.
+4. Deploy. Verify the overview metrics, adjust the date window in **Record linkage**, and confirm **Model performance** shows historical benchmarks. Open the assigned URL in a signed-out browser before sharing it. If needed, set visibility to public under the app's Sharing settings. Keep the preview branch available until a permanent app is deployed from `main`.
+
+[Deploy an app](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy) · [App dependencies](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies) · [Sharing](https://docs.streamlit.io/deploy/streamlit-community-cloud/share-your-app)
+
+Run the same read-only entry locally without any raw downloads.
+
+```bash
+python -m pip install -r dashboard/requirements.txt
+streamlit run dashboard/public.py --server.address 127.0.0.1
+```

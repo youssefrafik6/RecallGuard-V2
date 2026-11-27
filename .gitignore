@@ -18,3 +18,8 @@ dist/
 /results/local/
 *.joblib
 *.sqlite*
+
+# Private local review assignments and decisions
+/review-work/
+*.db
+*.db-*
