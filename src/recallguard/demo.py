@@ -1,63 +1,60 @@
-"""Fictional inputs and strict upload handling for the public linkage demo."""
+"""Official CPSC inputs and strict upload handling for the public linkage demo."""
 
 import csv
 import re
 from datetime import date
+from functools import lru_cache
 from io import StringIO
+from pathlib import Path
 
 import pandas as pd
 
+from recallguard.data import load_recalls
 from recallguard.linkage import LinkageConfig, gtin_codes, link
 
 FIELDS = ("product", "report_date", "manufacturer", "brand", "model", "upc")
 MAX_BYTES = 64 * 1024
 MAX_ROWS = 50
 MAX_FIELD = 120
+# Selected product fields from published CPSC reports in the 2026-11-26
+# snapshot. Report identifiers and narratives are intentionally omitted.
 SCENARIOS = {
-    "Lantern with model corroboration": (
-        "Maple Trail lithium lantern",
-        "2025-01-01",
-        "Maple Trail LLC",
-        "Maple Trail",
-        "MTL-210",
+    "Black+Decker garment steamer": (
+        "black decker easy garment steamer",
+        "2024-01-18",
+        "spectrum brands",
+        "black decker",
+        "hgs011",
+        "00050875002722",
+    ),
+    "Insignia dual-basket air fryer": (
+        "insignia 8 qt digital dual basket air fryer black",
+        "2024-03-13",
+        "best buy",
+        "insignia",
+        "ns-af8dbd2",
+        "00600603279911",
+    ),
+    "Segway P100S electric scooter": (
+        "segway p100s electric scooter",
+        "2024-06-11",
+        "segway",
+        "segway",
+        "p100s",
         "",
     ),
-    "Kettle with an exact GTIN": (
-        "Glass kettle",
-        "2025-01-10",
-        "",
-        "",
-        "",
-        "2001234567893",
-    ),
-    "Product with no candidate": ("Ceramic wall clock", "2025-01-10", "", "", "", ""),
 }
-CATALOG = (
-    (
-        "DEMO-101",
-        "Maple Trail lithium lantern",
-        "Maple Trail",
-        "Maple Trail lantern recall",
-        "Model MTL-210",
-        "2025-02-01",
-    ),
-    (
-        "DEMO-102",
-        "Maple Trail solar lantern",
-        "Maple Trail",
-        "Maple Trail lantern recall",
-        "Model MTS-330",
-        "2024-11-01",
-    ),
-    (
-        "DEMO-201",
-        "Cedar Harbor glass kettle",
-        "Cedar Harbor",
-        "Cedar Harbor electric kettle recall",
-        "Model CHK-440; GTIN 2001234567893",
-        "2025-03-03",
-    ),
+CATALOG_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "recalls_recall_listing (1).csv"
 )
+
+
+@lru_cache(maxsize=1)
+def public_catalog() -> pd.DataFrame:
+    path = CATALOG_PATH if CATALOG_PATH.is_file() else Path("data") / CATALOG_PATH.name
+    return load_recalls(path).dropna(subset=["recall_date"])
+
+
 OVERVIEW = [
     "report_id",
     "recall_id",
@@ -138,21 +135,10 @@ def match_demo(rows: list[dict[str, str]], horizon_days: int) -> pd.DataFrame:
                 f"Incident {index}: enter a checksum-valid GTIN or leave it blank."
             )
         clean.append(
-            {**values, "report_id": f"DEMO-{index:02}", "report_date": report_date}
+            {**values, "report_id": f"INPUT-{index:02}", "report_date": report_date}
         )
     incidents = pd.DataFrame(clean)
-    recalls = pd.DataFrame(
-        CATALOG,
-        columns=[
-            "recall_id",
-            "product",
-            "manufacturer",
-            "heading",
-            "recall_description",
-            "recall_date",
-        ],
-    )
-    recalls["recall_date"] = pd.to_datetime(recalls["recall_date"])
+    recalls = public_catalog()
     audit = link(incidents, recalls, LinkageConfig(horizon_days=horizon_days))
     if audit.empty:
         audit["recall_product"] = ""
@@ -166,7 +152,7 @@ def match_demo(rows: list[dict[str, str]], horizon_days: int) -> pd.DataFrame:
 def batch_results(rows: list[dict[str, str]], horizon_days: int) -> pd.DataFrame:
     audit = match_demo(rows, horizon_days)
     reports = pd.DataFrame(
-        {"report_id": [f"DEMO-{index:02}" for index in range(1, len(rows) + 1)]}
+        {"report_id": [f"INPUT-{index:02}" for index in range(1, len(rows) + 1)]}
     )
     results = reports.merge(audit[OVERVIEW], how="left", on="report_id")
     results["confidence"] = results["confidence"].fillna("no candidate")

@@ -9,7 +9,7 @@ uvicorn recallguard.api:app --host 127.0.0.1
 streamlit run dashboard/app.py --server.address 127.0.0.1
 ```
 
-Set `RECALLGUARD_SUMMARY` to a completed raw snapshot summary to replace the bundled dashboard data. The default demo uses aggregate data and fictional examples. `RECALLGUARD_CANDIDATES` enables record-level review on a private, loopback deployment. Set `RECALLGUARD_DATA` and `RECALLGUARD_MODEL` only for local historical API and scoring comparisons. Missing prerequisites return HTTP 503 on dependent endpoints. Invalid inference bodies return HTTP 422.
+Set `RECALLGUARD_SUMMARY` to a completed raw snapshot summary to replace the bundled dashboard data. The default demo uses aggregate data, official recall notices and product-only examples from published CPSC reports. `RECALLGUARD_CANDIDATES` enables record-level review on a private, loopback deployment. Set `RECALLGUARD_DATA` and `RECALLGUARD_MODEL` only for local historical API and scoring comparisons. Missing prerequisites return HTTP 503 on dependent endpoints. Invalid inference bodies return HTTP 422.
 
 | Endpoint | Response |
 | --- | --- |
@@ -46,7 +46,7 @@ The serving UID needs read access to the trusted bundle. Joblib uses executable 
 
 ## Streamlit Community Cloud
 
-The public entry point is `dashboard/public.py`. It uses the tracked aggregate snapshot and archived model metrics. The public path ignores local workspace, model, data, candidate and SQLite overrides. Fictional batch uploads are capped at 64 KiB and 50 rows, processed in memory, and never written to disk by the application. The public deployment has no review form. Use `dashboard/app.py` for trusted private local analysis.
+The public entry point is `dashboard/public.py`. It uses the tracked aggregate snapshot and archived model metrics. The public path ignores local workspace, model, data, candidate and SQLite overrides. Product-only batch uploads are capped at 64 KiB and 50 rows, processed in memory, and never written to disk by the application. The public deployment has no review form. Use `dashboard/app.py` for trusted private local analysis.
 
 1. Open [Streamlit Community Cloud](https://share.streamlit.io/) and connect the GitHub account with access to the repository.
 2. Choose **Create app**, then **Deploy from repo**. Use repository `youssefrafik6/RecallGuard-V2`, branch `main`, and file `dashboard/public.py`. To preview an unmerged change, select its pull request branch and use a distinct subdomain.

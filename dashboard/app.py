@@ -135,7 +135,10 @@ if page == "Overview":
             else "Source: CPSC snapshot downloaded November 26, 2026"
         )
     if public_demo:
-        st.subheader("Try the fictional catalog")
+        st.subheader("Match against official recall notices")
+        st.markdown(
+            "[Search official CPSC recall notices](https://www.cpsc.gov/Recalls)"
+        )
         st.write(
             "Start with Interactive product matching, run three cases in Batch analysis, "
             "or inspect the evidence behind a rank in Explainability."
@@ -175,10 +178,10 @@ elif page == "Dataset explorer":
     )
 
 elif page == "Record linkage":
-    st.info("Synthetic example. The product and recall identifiers are fictional.")
+    st.info("Historical example from the CPSC public export.")
     st.write(
-        "DEMO-01 reports a Maple Trail lithium lantern. Two candidates share product terms. "
-        "The solar lantern listing is rejected because its announcement precedes the report."
+        "A published report describes a Black+Decker garment steamer. "
+        "The linker compares product evidence and recall dates against the official catalog."
     )
     horizon = st.slider("Days after report eligible for linkage", 1, 365, 365)
     example = candidate_demo(horizon)
@@ -261,7 +264,9 @@ elif page == "About":
     )
 
 elif public_demo and page == "Interactive product matching":
-    st.info("Fictional recall catalog. Enter fictional product details only.")
+    st.info(
+        "Search the November 26, 2026 CPSC recall snapshot. Enter product details only and omit personal information."
+    )
     scenario = st.selectbox("Start with an example", list(SCENARIOS))
     product, day, maker, brand, model_code, gtin = SCENARIOS[scenario]
     with st.form(f"public-match-{scenario}"):
@@ -293,37 +298,37 @@ elif public_demo and page == "Interactive product matching":
         else:
             if audit.empty:
                 st.info(
-                    "No candidate passed the blocking step in the fictional catalog."
+                    "No candidate passed the blocking step in the CPSC recall snapshot."
                 )
             else:
                 st.dataframe(audit[OVERVIEW[1:]], hide_index=True)
     st.caption(
-        "Scores measure lexical similarity. Identifier and date rules also affect rank."
+        "Scores measure lexical similarity. Identifier and date rules also affect rank. Candidate links require independent review."
     )
 
 elif public_demo and page == "Batch analysis":
     st.info(
-        "Fictional recall catalog. Use fictional rows only. Uploads are processed in session memory."
+        "Match product fields against official CPSC recalls. Omit personal information. Uploads are processed in session memory."
     )
     st.download_button(
         "Download example CSV",
         demo_csv(),
-        "fictional-incidents.csv",
+        "cpsc-product-examples.csv",
         "text/csv",
         on_click="ignore",
     )
     source = st.radio(
         "Input source",
-        ["Three fictional reports", "Upload fictional CSV"],
+        ["Three public report examples", "Upload product CSV"],
         horizontal=True,
     )
-    if source == "Three fictional reports":
+    if source == "Three public report examples":
         st.dataframe(
             pd.read_csv(StringIO(demo_csv()), dtype=str).fillna(""), hide_index=True
         )
     upload = (
-        st.file_uploader("Fictional incident CSV", type=["csv"], max_upload_size=1)
-        if source == "Upload fictional CSV"
+        st.file_uploader("Product CSV", type=["csv"], max_upload_size=1)
+        if source == "Upload product CSV"
         else None
     )
     st.caption(
@@ -332,11 +337,11 @@ elif public_demo and page == "Batch analysis":
     horizon = st.slider("Eligibility window after report (days)", 1, 365, 365)
     if st.button("Match reports", type="primary"):
         try:
-            if source == "Three fictional reports":
+            if source == "Three public report examples":
                 payload = demo_csv().encode()
             else:
                 if upload is None:
-                    raise ValueError("Choose a fictional CSV first.")
+                    raise ValueError("Choose a product CSV first.")
                 if upload.size > MAX_BYTES:
                     raise ValueError("The CSV exceeds 64 KiB.")
                 payload = upload.getvalue()
@@ -348,7 +353,7 @@ elif public_demo and page == "Batch analysis":
             st.download_button(
                 "Download linkage results",
                 results.to_csv(index=False),
-                "fictional-linkage-results.csv",
+                "cpsc-linkage-results.csv",
                 "text/csv",
                 on_click="ignore",
             )
@@ -357,8 +362,10 @@ elif public_demo and page == "Batch analysis":
     )
 
 elif public_demo and page == "Explainability":
-    st.info("Fictional examples scored by the same linker used in the CPSC pipeline.")
-    scenario = st.selectbox("Fictional report", list(SCENARIOS))
+    st.info(
+        "Published CPSC report examples scored against the official recall catalog."
+    )
+    scenario = st.selectbox("Public report example", list(SCENARIOS))
     horizon = st.slider("Eligibility window after report (days)", 1, 365, 365)
     audit = match_demo([dict(zip(FIELDS, SCENARIOS[scenario]))], horizon)
     st.write(f"Report product: **{SCENARIOS[scenario][0]}**")

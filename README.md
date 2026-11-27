@@ -4,19 +4,16 @@ RecallGuard connects U.S. Consumer Product Safety Commission incident reports wi
 
 [**Live demo**](https://recallguard-v2-demo.streamlit.app/) · [Source code](https://github.com/youssefrafik6/RecallGuard-V2) · [Deployment guide](docs/DEPLOYMENT.md#streamlit-community-cloud) · [Snapshot report](docs/CPSC_SNAPSHOT_REPORT.md) · [Independent review](docs/INDEPENDENT_REVIEW.md)
 
-The hosted read-only demo shows official CPSC snapshot aggregates and historical model results. It uses a separate fictional catalog for the tools below.
+The hosted read-only demo shows official CPSC snapshot aggregates and historical model results. Matching uses all 10,098 dated recall listings from the November 26, 2026 CPSC snapshot. The presets use product fields and dates from published incident reports.
 
-![RecallGuard public demo showing aggregate CPSC metrics and the data pipeline](screenshots/public-overview.jpg)
+## Match against official CPSC recalls
 
-## Try the fictional catalog
-
-- **Interactive product matching** ranks candidates for a fictional report. Start from an example and adjust the product, identifiers, or date window.
-- **Batch analysis** runs three sample reports or accepts a fictional CSV of up to 50 rows and 64 KiB. Download ranked results, including rows with no candidates. Uploaded text stays out of the result file.
+- **Interactive product matching** ranks candidates against the official recall catalog. Start from an example and adjust the product, identifiers, or date window.
+- **Batch analysis** runs three sample reports or accepts a product-only CSV of up to 50 rows and 64 KiB. Download ranked results, including rows with no candidates. Uploaded text stays out of the result file.
 - **Explainability** shows the linker's actual feature values, date eligibility, confidence rule, and ranking order. Scores measure similarity. The public tools require no model file.
 
-[Fictional batch results](screenshots/public-batch-matching.jpg) · [Matching evidence](screenshots/public-linkage-explanation.jpg)
+The built-in examples surface these official notices as top candidates: [Black+Decker garment steamers (24-181)](https://www.cpsc.gov/Recalls/2024/Two-Million-Black-Decker-Garment-Steamers-Recalled-by-Empower-Brands-in-Major-Recall-Expansion-Due-to-Burn-Hazard-Refund-Now-Offered), [Insignia air fryers (24-159)](https://www.cpsc.gov/Recalls/2024/Best-Buy-Recalls-Insignia-Air-Fryers-and-Air-Fryer-Ovens-Due-to-Fire-Burn-and-Laceration-Hazards), and [Segway P100 scooters (25-052)](https://www.cpsc.gov/Recalls/2025/Segway-Recalls-Segway-Ninebot-P100-KickScooters-Due-to-Fall-and-Injury-Hazards). These selected examples illustrate the workflow. Independent adjudication is needed to measure linkage accuracy.
 
-![Interactive product matching with a fictional lantern and ranked candidates](screenshots/public-product-matching.jpg)
 
 ## How it works
 
@@ -30,7 +27,7 @@ flowchart LR
     M --> E
 ```
 
-The Python and pandas pipeline validates official files, preserves hashes, normalizes names and identifiers, and records exclusions. Linkage uses rare tokens, fuzzy name similarity, model codes, checksum-valid GTINs, and date eligibility. A unique high-confidence candidate produces a heuristic positive. Unresolved reports stay unlabeled. The system uses Streamlit for the dashboard, FastAPI for local serving, DuckDB for analytics, and scikit-learn and XGBoost for historical experiments. See the [pipeline](docs/DATA_PIPELINE.md) and [fictional linkage example](screenshots/public-linkage.jpg).
+The Python and pandas pipeline validates official files, preserves hashes, normalizes names and identifiers, and records exclusions. Linkage uses rare tokens, fuzzy name similarity, model codes, checksum-valid GTINs, and date eligibility. A unique high-confidence candidate produces a heuristic positive. Unresolved reports stay unlabeled. The system uses Streamlit for the dashboard, FastAPI for local serving, DuckDB for analytics, and scikit-learn and XGBoost for historical experiments. See the [pipeline](docs/DATA_PIPELINE.md) and [official CPSC recall notices](https://www.cpsc.gov/Recalls).
 
 ## Results and limitations
 

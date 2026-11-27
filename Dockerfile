@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src ./src
 RUN pip install --no-cache-dir --no-deps .
 COPY dashboard ./dashboard
+COPY ["data/recalls_recall_listing (1).csv", "./data/"]
 COPY .streamlit ./.streamlit
 COPY results/metrics/*.json ./results/metrics/
 USER recallguard

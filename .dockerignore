@@ -3,6 +3,8 @@
 !requirements.txt
 !src/
 !src/**
+!data/
+!data/recalls_recall_listing (1).csv
 !dashboard/
 !dashboard/app.py
 !dashboard/public.py
