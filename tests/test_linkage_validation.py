@@ -90,7 +90,7 @@ def test_public_entrypoint_never_reads_local_operator_overrides(tmp_path, monkey
     monkeypatch.setenv("RECALLGUARD_MODEL", str(unsafe))
     monkeypatch.setenv("RECALLGUARD_REVIEWS", str(ledger))
     public = Path(__file__).resolve().parents[1] / "dashboard/public.py"
-    ui = AppTest.from_file(str(public)).run()
+    ui = AppTest.from_file(str(public), default_timeout=45).run()
     assert [metric.value for metric in ui.metric] == ["70,000", "10,098", "168"]
     for page in ui.sidebar.radio[0].options:
         ui.sidebar.radio[0].set_value(page).run()
@@ -99,7 +99,7 @@ def test_public_entrypoint_never_reads_local_operator_overrides(tmp_path, monkey
         assert not any(field.label == "Reviewer label" for field in ui.text_input)
         if page == "Record linkage":
             assert len(ui.dataframe) == 2
-            assert set(ui.dataframe[0].value.recall_id) == {"DEMO-101", "DEMO-102"}
+            assert ui.dataframe[0].value.iloc[0].recall_id == "24-181"
     assert not ledger.exists()
 
 

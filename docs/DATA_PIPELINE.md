@@ -47,7 +47,7 @@ A single high candidate creates a heuristic positive. Several high candidates le
 | `candidates.csv` | Local ranked candidate pairs and evidence |
 | `review_sample.csv` | Local high-scoring examples within each tier for inspection |
 
-The bundled dashboard defaults to aggregate snapshot data and an interactive fictional linkage example. For private review on loopback, explicitly set `RECALLGUARD_CANDIDATES` to the generated sample. Keep the record-level artifacts and review ledger local. Raw exports and derived records can contain contextual identifiers. See the [SaferProducts terms](https://www.saferproducts.gov/Business/Acknowledge?source=signIn) and [CPSC privacy notice](https://www.cpsc.gov/About-CPSC/Policies-Statements-and-Directives/Privacy-Policy).
+The bundled dashboard defaults to aggregate snapshot data and interactive matching against the official recall catalog. For private review on loopback, explicitly set `RECALLGUARD_CANDIDATES` to the generated sample. Keep the record-level artifacts and review ledger local. Raw exports and derived records can contain contextual identifiers. See the [SaferProducts terms](https://www.saferproducts.gov/Business/Acknowledge?source=signIn) and [CPSC privacy notice](https://www.cpsc.gov/About-CPSC/Policies-Statements-and-Directives/Privacy-Policy).
 
 ## Evaluation
 

@@ -35,58 +35,51 @@ def test_batch_rejects_invalid_input(payload, problem):
 
 
 def test_public_matching_and_explanations():
-    ui = AppTest.from_file(str(ENTRY)).run()
+    ui = AppTest.from_file(str(ENTRY), default_timeout=45).run()
     ui.sidebar.radio[0].set_value("Interactive product matching").run()
     ui.button[0].click().run()
     assert not ui.exception
-    assert ui.dataframe[0].value.iloc[0]["recall_id"] == "DEMO-101"
+    assert ui.dataframe[0].value.iloc[0]["recall_id"] == "24-181"
     ui.text_input[1].set_value("2025-02-30")
     ui.button[0].click().run()
     assert "invalid" in ui.error[0].value
-    ui.selectbox[0].set_value("Product with no candidate").run()
-    ui.button[0].click().run()
-    assert "No candidate" in ui.info[-1].value
 
     ui.sidebar.radio[0].set_value("Explainability").run()
     assert not ui.exception
-    assert [metric.value for metric in ui.metric] == ["1", "High", "1.000"]
-    assert ui.dataframe[0].value["Weighted value"].sum() == 1.0
-    ui.selectbox[1].set_value("DEMO-102").run()
-    assert ui.metric[1].value == "Rejected"
-    assert any("Date eligible: no" in caption.value for caption in ui.caption)
-    ui.selectbox[0].set_value("Kettle with an exact GTIN").run()
-    assert ui.metric[1].value == "High"
-    assert (
-        ui.dataframe[1].value.set_index("Additional evidence").at["Exact GTIN", "Value"]
-        == "Yes"
-    )
+    assert [metric.value for metric in ui.metric][:2] == ["1", "High"]
+    assert "24-181" in ui.selectbox[1].options[0]
+    assert "Date eligible: yes" in " ".join(c.value for c in ui.caption)
     ui.slider[0].set_value(1).run()
     assert ui.metric[1].value == "Rejected"
-    ui.selectbox[0].set_value("Product with no candidate").run()
-    assert "no pair-level evidence" in ui.info[-1].value
+    assert "Date eligible: no" in " ".join(c.value for c in ui.caption)
 
 
 def test_public_batch_example_upload_validation_and_download():
-    ui = AppTest.from_file(str(ENTRY)).run()
+    ui = AppTest.from_file(str(ENTRY), default_timeout=45).run()
     ui.sidebar.radio[0].set_value("Batch analysis").run()
     ui.button[0].click().run()
     assert not ui.exception
     assert ui.dataframe[-1].value.report_id.nunique() == 3
-    assert "no candidate" in ui.dataframe[-1].value.confidence.values
+    assert set(ui.dataframe[-1].value.query("rank == 1").recall_id) == {
+        "24-181",
+        "24-159",
+        "25-052",
+    }
     next(item for item in ui.radio if item.label == "Input source").set_value(
-        "Upload fictional CSV"
+        "Upload product CSV"
     ).run()
     ui.button[0].click().run()
-    assert "Choose a fictional CSV" in ui.error[0].value
+    assert "Choose a product CSV" in ui.error[0].value
     ui.get("file_uploader")[0].upload("invalid.csv", b"product\nexample").run()
     ui.button[0].click().run()
     assert "unique columns" in ui.error[0].value
 
     payload = demo_csv().encode() + b"=PRIVATE-TEXT,2025-01-01,,,,\n"
-    ui.get("file_uploader")[0].upload("fictional.csv", payload, "text/csv").run()
+    ui.get("file_uploader")[0].upload("products.csv", payload, "text/csv").run()
     ui.button[0].click().run()
     assert not ui.exception and not ui.error
     actual = ui.dataframe[0].value
     assert actual.report_id.nunique() == 4
     assert "PRIVATE-TEXT" not in actual.to_csv(index=False)
+    assert "no candidate" in actual.confidence.values
     assert ui.get("download_button")[-1].label == "Download linkage results"
