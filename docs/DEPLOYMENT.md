@@ -46,12 +46,12 @@ The serving UID needs read access to the trusted bundle. Joblib uses executable 
 
 ## Streamlit Community Cloud
 
-The public entry point is `dashboard/public.py`. It uses the tracked aggregate snapshot and archived model metrics. The public path ignores local workspace, model, data, candidate and SQLite overrides. It has no upload or review form. Use `dashboard/app.py` for trusted private local analysis.
+The public entry point is `dashboard/public.py`. It uses the tracked aggregate snapshot and archived model metrics. The public path ignores local workspace, model, data, candidate and SQLite overrides. Fictional batch uploads are capped at 64 KiB and 50 rows, processed in memory, and never written to disk by the application. The public deployment has no review form. Use `dashboard/app.py` for trusted private local analysis.
 
 1. Open [Streamlit Community Cloud](https://share.streamlit.io/) and connect the GitHub account with access to the repository.
-2. Choose **Create app**, then **Deploy from repo**. Use repository `youssefrafik6/RecallGuard-V2`, branch `main` after the portfolio pull request is merged, and file `dashboard/public.py`. To preview the unmerged changes, select `codex/portfolio-demo-validation` instead.
+2. Choose **Create app**, then **Deploy from repo**. Use repository `youssefrafik6/RecallGuard-V2`, branch `main`, and file `dashboard/public.py`. To preview an unmerged change, select its pull request branch and use a distinct subdomain.
 3. In **Advanced settings**, select **Python 3.13** or **Python 3.14**. Leave Secrets empty. Community Cloud loads the pinned `dashboard/requirements.txt` adjacent to the entry point.
-4. Deploy. Verify the overview metrics, adjust the date window in **Record linkage**, and confirm **Model performance** shows historical benchmarks. Open the assigned URL in a signed-out browser before sharing it. If needed, set visibility to public under the app's Sharing settings. Keep the preview branch available until a permanent app is deployed from `main`.
+4. Deploy. Verify the overview metrics, run **Interactive product matching** and **Batch analysis**, inspect a candidate in **Explainability**, and confirm **Model performance** shows historical benchmarks. Open the assigned URL in a signed-out browser before sharing it. If needed, set visibility to public under the app's Sharing settings. Keep the preview branch available until a permanent app is deployed from `main`.
 
 [Deploy an app](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/deploy) · [App dependencies](https://docs.streamlit.io/deploy/streamlit-community-cloud/deploy-your-app/app-dependencies) · [Sharing](https://docs.streamlit.io/deploy/streamlit-community-cloud/share-your-app)
 

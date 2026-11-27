@@ -96,7 +96,7 @@ def test_public_entrypoint_never_reads_local_operator_overrides(tmp_path, monkey
         ui.sidebar.radio[0].set_value(page).run()
         assert not ui.exception
         assert not ui.get("file_uploader")
-        assert not ui.text_input
+        assert not any(field.label == "Reviewer label" for field in ui.text_input)
         if page == "Record linkage":
             assert len(ui.dataframe) == 2
             assert set(ui.dataframe[0].value.recall_id) == {"DEMO-101", "DEMO-102"}

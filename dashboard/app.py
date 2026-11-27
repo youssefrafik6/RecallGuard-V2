@@ -3,14 +3,23 @@
 import hashlib
 import json
 import os
-from io import BytesIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from sqlite3 import Error as SQLiteError
 
 import pandas as pd
 import streamlit as st
 
-from recallguard.linkage import LinkageConfig, link
+from recallguard.demo import (
+    FIELDS,
+    MAX_BYTES,
+    OVERVIEW,
+    SCENARIOS,
+    batch_results,
+    demo_csv,
+    match_demo,
+    parse_upload,
+)
 from recallguard.raw import SCHEMA_VERSION
 
 public_demo = globals().get("PUBLIC_DEMO", False)
@@ -56,36 +65,8 @@ def snapshot_summary(path: Path, modified: int):
 
 @st.cache_data
 def candidate_demo(horizon_days: int):
-    incidents = pd.DataFrame(
-        [
-            {
-                "report_id": "DEMO-01",
-                "product": "Maple Trail lithium lantern",
-                "manufacturer": "Maple Trail LLC",
-                "brand": "Maple Trail",
-                "report_date": pd.Timestamp("2025-01-01"),
-            }
-        ]
-    )
-    recalls = pd.DataFrame(
-        [
-            {
-                "recall_id": "DEMO-101",
-                "product": "Maple Trail lithium lantern",
-                "manufacturer": "Maple Trail",
-                "heading": "Maple Trail lantern recall",
-                "recall_date": pd.Timestamp("2025-02-01"),
-            },
-            {
-                "recall_id": "DEMO-102",
-                "product": "Maple Trail solar lantern",
-                "manufacturer": "Maple Trail",
-                "heading": "Maple Trail lantern recall",
-                "recall_date": pd.Timestamp("2024-11-01"),
-            },
-        ]
-    )
-    return link(incidents, recalls, LinkageConfig(horizon_days=horizon_days))
+    sample = next(iter(SCENARIOS.values()))
+    return match_demo([dict(zip(FIELDS, sample))], horizon_days)
 
 
 path = "" if public_demo else os.getenv("RECALLGUARD_MODEL", "")
@@ -97,7 +78,9 @@ page = st.sidebar.radio(
     "Views",
     [
         "Overview",
-        "Historical association scoring",
+        "Interactive product matching"
+        if public_demo
+        else "Historical association scoring",
         "Batch analysis",
         "Dataset explorer",
         "Record linkage",
@@ -151,6 +134,12 @@ if page == "Overview":
             if configured
             else "Source: CPSC snapshot downloaded November 26, 2026"
         )
+    if public_demo:
+        st.subheader("Try the fictional catalog")
+        st.write(
+            "Start with Interactive product matching, run three cases in Batch analysis, "
+            "or inspect the evidence behind a rank in Explainability."
+        )
     st.subheader("From source files to review")
     st.graphviz_chart("""
         digraph {
@@ -160,7 +149,7 @@ if page == "Overview":
         }
     """)
     st.info(
-        "The official exports supply no verified outcome labels. "
+        "Independently verified outcomes: zero. "
         "Historical model evaluation uses a separate sample with linkage labels."
     )
 
@@ -270,6 +259,179 @@ elif page == "About":
         "Missed links, report availability, catalog coverage, and product identity ambiguity "
         "limit how far the results generalize."
     )
+
+elif public_demo and page == "Interactive product matching":
+    st.info("Fictional recall catalog. Enter fictional product details only.")
+    scenario = st.selectbox("Start with an example", list(SCENARIOS))
+    product, day, maker, brand, model_code, gtin = SCENARIOS[scenario]
+    with st.form(f"public-match-{scenario}"):
+        name_column, date_column = st.columns([2, 1])
+        product = name_column.text_input("Product name", value=product, max_chars=120)
+        day = date_column.text_input(
+            "Report date (YYYY-MM-DD)", value=day, max_chars=10
+        )
+        left, right = st.columns(2)
+        maker = left.text_input("Manufacturer", value=maker, max_chars=120)
+        brand = right.text_input("Brand", value=brand, max_chars=120)
+        model_code = left.text_input("Model code", value=model_code, max_chars=120)
+        gtin = right.text_input("GTIN / UPC", value=gtin, max_chars=120)
+        horizon = st.slider("Eligibility window after report (days)", 1, 365, 365)
+        submitted = st.form_submit_button("Find candidates", type="primary")
+    if submitted:
+        row = dict(
+            product=product,
+            report_date=day,
+            manufacturer=maker,
+            brand=brand,
+            model=model_code,
+            upc=gtin,
+        )
+        try:
+            audit = match_demo([row], horizon)
+        except ValueError as exc:
+            st.error(str(exc))
+        else:
+            if audit.empty:
+                st.info(
+                    "No candidate passed the blocking step in the fictional catalog."
+                )
+            else:
+                st.dataframe(audit[OVERVIEW[1:]], hide_index=True)
+    st.caption(
+        "Scores measure lexical similarity. Identifier and date rules also affect rank."
+    )
+
+elif public_demo and page == "Batch analysis":
+    st.info(
+        "Fictional recall catalog. Use fictional rows only. Uploads are processed in session memory."
+    )
+    st.download_button(
+        "Download example CSV",
+        demo_csv(),
+        "fictional-incidents.csv",
+        "text/csv",
+        on_click="ignore",
+    )
+    source = st.radio(
+        "Input source",
+        ["Three fictional reports", "Upload fictional CSV"],
+        horizontal=True,
+    )
+    if source == "Three fictional reports":
+        st.dataframe(
+            pd.read_csv(StringIO(demo_csv()), dtype=str).fillna(""), hide_index=True
+        )
+    upload = (
+        st.file_uploader("Fictional incident CSV", type=["csv"], max_upload_size=1)
+        if source == "Upload fictional CSV"
+        else None
+    )
+    st.caption(
+        "Maximum 64 KiB and 50 rows. Required columns are product and report_date (YYYY-MM-DD). Optional columns are manufacturer, brand, model, and upc."
+    )
+    horizon = st.slider("Eligibility window after report (days)", 1, 365, 365)
+    if st.button("Match reports", type="primary"):
+        try:
+            if source == "Three fictional reports":
+                payload = demo_csv().encode()
+            else:
+                if upload is None:
+                    raise ValueError("Choose a fictional CSV first.")
+                if upload.size > MAX_BYTES:
+                    raise ValueError("The CSV exceeds 64 KiB.")
+                payload = upload.getvalue()
+            results = batch_results(parse_upload(payload), horizon)
+        except ValueError as exc:
+            st.error(str(exc))
+        else:
+            st.dataframe(results, hide_index=True)
+            st.download_button(
+                "Download linkage results",
+                results.to_csv(index=False),
+                "fictional-linkage-results.csv",
+                "text/csv",
+                on_click="ignore",
+            )
+    st.caption(
+        "Report IDs follow input row order. Results contain catalog values and linkage evidence, with uploaded text excluded."
+    )
+
+elif public_demo and page == "Explainability":
+    st.info("Fictional examples scored by the same linker used in the CPSC pipeline.")
+    scenario = st.selectbox("Fictional report", list(SCENARIOS))
+    horizon = st.slider("Eligibility window after report (days)", 1, 365, 365)
+    audit = match_demo([dict(zip(FIELDS, SCENARIOS[scenario]))], horizon)
+    st.write(f"Report product: **{SCENARIOS[scenario][0]}**")
+    st.markdown(
+        f"**Date eligibility:** the recall must occur 1–{horizon} days after the report. "
+        "Within that window, an exact checksum-valid GTIN can yield High confidence. "
+        "An exact model code requires brand or manufacturer corroboration for High. "
+        "Name-based matches require shared product tokens."
+    )
+    st.caption(
+        "Ranking sorts by confidence tier, exact GTIN, exact model code, lexical score, "
+        "document similarity, then recall ID."
+    )
+    if audit.empty:
+        st.info(
+            "No candidate passed blocking, so there is no pair-level evidence or ranking."
+        )
+    else:
+        labels = audit.set_index("recall_id")["recall_product"]
+        candidate = st.selectbox(
+            "Candidate to inspect",
+            list(labels.index),
+            format_func=lambda key: f"{key} · {labels[key]}",
+        )
+        pair = audit.set_index("recall_id").loc[candidate]
+        eligible = 0 < pair.days_to_recall <= horizon
+        left, middle, right = st.columns(3)
+        left.metric("Rank", int(pair["rank"]))
+        middle.metric("Confidence tier", pair.confidence.title())
+        right.metric("Lexical score", f"{pair.score:.3f}")
+        st.write(f"**Rule result:** {pair.reason}")
+        st.caption(
+            f"Recall date offset: {pair.days_to_recall:+d} days · Date eligible: {'yes' if eligible else 'no'}"
+        )
+        weighted = [
+            ("Product token overlap", "token_overlap", 0.50),
+            ("Name similarity", "name_similarity", 0.30),
+            ("Exact manufacturer", "manufacturer_exact", 0.15),
+            ("Brand in recall text", "brand_in_recall", 0.05),
+        ]
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    (label, float(pair[field]), weight, float(pair[field]) * weight)
+                    for label, field, weight in weighted
+                ],
+                columns=["Lexical feature", "Value", "Weight", "Weighted value"],
+            ),
+            hide_index=True,
+        )
+        st.dataframe(
+            pd.DataFrame(
+                [
+                    ("Exact GTIN", "Yes" if pair.gtin_exact else "No"),
+                    ("Exact model", "Yes" if pair.model_exact else "No"),
+                    ("Blocking votes", str(pair.block_votes)),
+                    (
+                        "Document similarity (tie-breaker)",
+                        f"{pair.document_tfidf_cosine:.3f}",
+                    ),
+                    ("Edit similarity (diagnostic)", f"{pair.edit_similarity:.3f}"),
+                    (
+                        "Trigram overlap (diagnostic)",
+                        f"{pair.char_trigram_jaccard:.3f}",
+                    ),
+                ],
+                columns=["Additional evidence", "Value"],
+            ),
+            hide_index=True,
+        )
+        st.caption(
+            "Weights describe the linkage formula. The lexical score is a similarity measure."
+        )
 
 elif bundle is None and page != "Model performance":
     st.info(
