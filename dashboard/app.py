@@ -141,7 +141,8 @@ if page == "Overview":
         "CPSC recalls. The Record linkage page demonstrates how the ranking works."
     )
     st.info(
-        "The official exports supply no verified outcome labels for supervised evaluation."
+        "The official exports supply no verified outcome labels. "
+        "Historical model evaluation uses a separate sampled dataset."
     )
 
 elif page == "Dataset explorer":
@@ -232,11 +233,10 @@ elif page == "Record linkage":
                         )
 
 elif page == "About":
-    st.subheader("Youssef Rafik · Southern Connecticut State University")
+    st.subheader("About RecallGuard V2")
     st.write(
-        "Bachelor of Science in Data Science capstone, Spring 2026. The original project "
-        "connected public incident reports to official recall listings and compared NLP classifiers. "
-        "V2 adds reproducible split comparisons, candidate review, local model artifacts, DuckDB analytics and a shared API."
+        "Review candidate links between incident reports and recalls, compare validation splits, "
+        "and explore historical associations using local model artifacts and DuckDB aggregates."
     )
     st.write("Python · pandas · scikit-learn · XGBoost · DuckDB · Streamlit · FastAPI")
     st.markdown("[CPSC data sources](https://www.cpsc.gov/Data)")

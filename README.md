@@ -4,7 +4,7 @@
 
 Youssef Rafik · Based on a Southern Connecticut State University Data Science capstone
 
-RecallGuard V2 ranks candidate links between official CPSC incident reports and recalls. Streamlit shows aggregate snapshot results and an interactive linkage example. Historical model artifacts and FastAPI scoring remain available for benchmark comparison.
+Consumer incident reports and recall listings lack a shared product ID. RecallGuard V2 ranks candidate links between official CPSC exports. Streamlit shows aggregate snapshot results and an interactive linkage example. Streamlit and FastAPI share validation and historical model inference.
 
 ```mermaid
 flowchart LR
@@ -13,6 +13,14 @@ flowchart LR
     L --> A[Aggregate snapshot dashboard]
     C[Historical labeled CSV] --> S[Historical benchmarks]
 ```
+
+## Features
+
+Training runs offline. Candidate review is separate from supervised evaluation and inference. See the [architecture](docs/ARCHITECTURE.md) for component boundaries and the [version comparison](docs/V1_TO_V2_COMPARISON.md) for research provenance.
+
+- **Record linkage** uses rare-token blocks, exact model codes, checksum-valid GTINs, RapidFuzz and sparse TF-IDF. The audit records evidence, date eligibility and rank.
+- **ML experiments** compare Dummy, logistic regression, Linear SVM, Complement NB and XGBoost. A CPU MiniLM experiment shares a campaign-purged split with a word TF-IDF comparator.
+- **Serving** combines typed single and batch predictions, DuckDB aggregates, local model contributions and eight dashboard views.
 
 ## Quick start
 
@@ -54,7 +62,7 @@ Run `uvicorn recallguard.api:app --host 127.0.0.1` and visit `/docs` for the API
 | `dashboard/` | Streamlit interface |
 | `scripts/` | Optional CPU MiniLM and TF-IDF benchmark |
 | `results/metrics/` | Historical and V2 aggregate experiment reports |
-| `docs/` | Data terms, deployment, comparison, limitations and interview material |
+| `docs/` | Data terms, deployment, comparison, and limitations |
 | `tests/` | Synthetic unit, API and dashboard tests |
 
 ## Interpretation

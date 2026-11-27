@@ -35,8 +35,6 @@ The architecture and endpoints are documented in [architecture](ARCHITECTURE.md)
 
 - The CPU embedding benchmark completed. MiniLM had F1 0.233 and AP 0.141, while word TF-IDF had F1 0.208 and AP 0.168. Both used the same campaign-purged holdout. [NLP results and resource comparison](MODEL_EVALUATION.md#minilm-versus-word-tf-idf)
 
-## Publication
+## Data distribution
 
-The release branch is prepared locally. The separate [GitHub repository](https://github.com/youssefrafik6/RecallGuard-V2) was created and verified as private with no Git refs. Code remains local pending explicit publication approval. The original repository's GitHub main was verified at the same commit, `b721216`, before and after V2 implementation.
-
-Public release is gated on approval. Any future raw or derived dataset distribution requires its own rights and privacy review. No such payload is included in the release branch.
+The [data pipeline guide](DATA_PIPELINE.md) documents local storage and data access. Raw CPSC snapshots, derived record-level exports, review records, and model weights are excluded from version control.
