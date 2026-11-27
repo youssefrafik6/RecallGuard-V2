@@ -142,7 +142,7 @@ if page == "Overview":
     )
     st.info(
         "The official exports supply no verified outcome labels. "
-        "Historical model evaluation uses a separate sampled dataset."
+        "Historical model evaluation uses a separate sample with linkage labels."
     )
 
 elif page == "Dataset explorer":

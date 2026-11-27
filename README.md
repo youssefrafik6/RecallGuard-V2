@@ -40,7 +40,7 @@ The raw exports provide no independently verified positive or negative outcome l
 
 ## Historical benchmarks
 
-The following results were measured on the old sampled proxy labels in `training_data.csv`. Reproduction commands and holdout details are in the [historical model evaluation](docs/MODEL_EVALUATION.md).
+The following held-out results were measured on the old sampled proxy labels in `training_data.csv`. Reproduction commands and holdout details are in the [historical model evaluation](docs/MODEL_EVALUATION.md).
 
 | Held-out design | F1 | Average precision |
 | --- | ---: | ---: |
@@ -49,6 +49,10 @@ The following results were measured on the old sampled proxy labels in `training
 | Chronological with campaign purging | 0.098 | 0.111 |
 
 The temporal AP was below the 0.128 test positive rate. The validation-selected operating point recovered eight of 97 positives. The separate MiniLM probe improved F1 over word TF-IDF at its chosen threshold (0.233 versus 0.208), with lower AP and substantially higher CPU cost. See [V2 evaluation](docs/MODEL_EVALUATION.md) and [historical results](docs/V1_TO_V2_COMPARISON.md#historical-metric-provenance).
+
+## Historical dashboard screenshots
+
+[Overview from the historical dataset](screenshots/overview.png) · [Historical model performance](screenshots/model-performance.png)
 
 ## API and containers
 
@@ -67,6 +71,6 @@ Run `uvicorn recallguard.api:app --host 127.0.0.1` and visit `/docs` for the API
 
 ## Interpretation
 
-The score describes retrospective association with historical linkage labels. It does not estimate actual hazard or future recall probability. A prospective study needs publication-time snapshots, independent label adjudication and a fresh time period with mature outcomes. See [limitations](docs/LIMITATIONS.md), the [implementation report](docs/IMPLEMENTATION_SUMMARY.md), and the [MIT license](LICENSE).
+The score describes retrospective association with historical linkage labels. Candidate links require review, and incomplete records can leave a report without a link. The score does not estimate actual hazard or future recall probability. A prospective study needs publication-time snapshots, independent label adjudication and a fresh time period with mature outcomes. See [limitations](docs/LIMITATIONS.md), the [implementation report](docs/IMPLEMENTATION_SUMMARY.md), and the [MIT license](LICENSE).
 
 Future work includes blinded review of ambiguous pairs, a mature publication-time cohort, and validation on a new period before any external deployment.
