@@ -1,54 +1,54 @@
-# Data pipeline
+# Official CPSC data pipeline
 
-Download public CSV exports via the [CPSC open data index](https://www.cpsc.gov/Data). Local data paths are configurable. Preserve the export dates and hashes for repeat experiments.
+Use the [SaferProducts incident archive](https://www.saferproducts.gov/SPDB.zip) and the [complete CPSC recall listing](https://www.cpsc.gov/s3fs-public/recall-data/recalls_recall_listing.csv). Both URLs serve rolling exports. Keep the downloaded bytes locally and compare their SHA-256 hashes to the run manifest when reproducing a particular snapshot. The recall CSV bundled inside the incident ZIP is outside this pipeline's inputs.
 
-```bash
-recallguard prepare --incidents data/raw/IncidentReports.csv \
-  --recalls data/raw/recalls_recall_listing.csv --out data/processed
-```
+## Reproduce a snapshot
 
-The reader recognizes the incident disclaimer preamble, retains only supported columns, preserves string identifiers, parses mixed date formats, and logs invalid dates. Exact duplicates collapse and conflicting IDs are excluded. The recall export supports `Recall Number`, `Date`, `Name of product`, `Recall Heading`, `Manufacturers`, and optional `Description`. Optional incident fields are filled consistently. Normalization applies Unicode NFKC, case folding, punctuation and placeholder handling, and common manufacturer suffix removal.
-
-Each incident generates candidates through rare tokens and two identifier indexes. The model index extracts mixed letter–digit codes from recall product names, headings, and descriptions, then looks up the incident's structured model value. The UPC index checks GTIN checksums and normalizes equivalent zero-padding before lookup. Generic name blocks are capped at 75 recalls and use up to 18 ranked candidates. Eligible dates break ties within identifier tiers before token votes. All retained identifier candidates are scored even when the rank limit is reached, so competing direct matches remain visible. Candidate dates must be strictly after the report and within 365 days by default.
-
-A date-eligible, checksum-valid exact GTIN or an exact model code with manufacturer or brand corroboration can qualify as high confidence. A model code without corroboration qualifies for review. Other pairs use the lexical score, combining product token Jaccard (0.50), string similarity (0.30), exact manufacturer (0.15), and brand tokens in the recall name or heading (0.05). Text-only matches require product token overlap. The default lexical high and review thresholds are 0.82 and 0.57. `--high`, `--review`, and `--horizon` configure the rules. The lexical score and identifier evidence are separate fields in the candidate export.
-
-A unique high candidate produces a proxy positive. Competing high candidates and unresolved rows remain unlabeled. Identifier rules are heuristic because free text may mention unrelated products or numbers. A checksum checks syntax and cannot establish that a GTIN describes the recalled item. A late publication date can also eliminate any apparent lead time relative to public availability.
-
-Outputs include `candidates.csv` with match evidence and rejection reasons, `observations.csv` with a nullable target, `review_sample.csv` with high-scoring examples per status, and `summary.json` with input hashes, configuration and counts. On the local exports, ingestion read 65,058 incidents and 9,666 recall listings. After ID validation, 9,623 recall rows remained. The run produced 1,144,551 candidate pairs, 148 high-confidence pairs, and 146 uniquely linked proxy positives. Two high-confidence pairs shared a report and remained unresolved. The reconstructed labels still require adjudication before supervised training. The earlier capstone files used different rules and a different sample. The CLI's supervised entry point uses the original CPSC-shaped pre-labeled CSV.
-
-The SaferProducts terms allow copying and distribution of posted public information while excluding personally identifiable information. Public reports can contain narrative and contextual identifiers and carry accuracy limitations. Keep raw and derived exports local and review narrative exposure before any redistribution or public demo. The existing MIT license applies to project software. [SaferProducts Terms of Use](https://www.saferproducts.gov/Business/Acknowledge?source=signIn) · [CPSC Privacy and Security Notice](https://www.cpsc.gov/About-CPSC/Policies-Statements-and-Directives/Privacy-Policy)
-
-## Historical reference replay
-
-The earlier 416-pair match audit provides a positive-only regression check for candidate generation. To reproduce the comparison locally, point the CLI to the older audit export.
+From the repository root, create and activate the environment from the README. The reported run used Python 3.13.2 and the core package versions in `constraints-research.txt`.
 
 ```bash
-recallguard check-linkage --candidates data/processed/candidates.csv \
-  --reference /path/to/matches_audit.csv --horizon 365
+python -m pip install -c constraints-research.txt -r requirements-dev.txt -e .
+mkdir -p data/raw
+curl --fail --location --retry 3 https://www.saferproducts.gov/SPDB.zip \
+  --output data/raw/SPDB.zip
+curl --fail --location --retry 3 \
+  https://www.cpsc.gov/s3fs-public/recall-data/recalls_recall_listing.csv \
+  --output data/raw/recalls_recall_listing.csv
+unzip -t data/raw/SPDB.zip
+recallguard prepare-raw --incident-zip data/raw/SPDB.zip \
+  --recalls data/raw/recalls_recall_listing.csv --out data/cpsc-local
+RECALLGUARD_SUMMARY=data/cpsc-local/summary.json \
+  streamlit run dashboard/app.py --server.address 127.0.0.1
 ```
 
-| Reference outcome | Text-only linker | Identifier-aware linker |
-| --- | ---: | ---: |
-| Candidate pairs recovered, all 416 historical pairs | 337 | 390 |
-| Candidate pairs recovered, 207 date-eligible historical pairs | 170 | 204 |
-| Date-eligible pairs given review status | 5 | 18 |
-| Date-eligible pairs given high confidence | 1 | 115 |
+Use a fresh output directory per run. The command validates the selected ZIP member while streaming it out, checks its size, validates required headers and CSV record widths, and publishes outputs together after a successful run. Input hashes, encodings, row accounting, dates, and linkage settings appear in `summary.json`. Keep the rolling exports under versioned local paths to preserve exact input bytes.
 
-The audit comes from an earlier algorithm and has no representative negatives. Agreement measures coverage of prior candidate links and cannot estimate true precision, recall, or prospective model performance. The strict report-date gate also excludes historical links whose announcement date was on the same day or more than 365 days later.
+## Cleaning and exclusions
 
-## V2 review signals and schema
+- The incident reader skips the CPSC disclaimer when present. It tries UTF-8 with optional BOM, then falls back to Windows-1252. The recall export uses UTF-8 with optional BOM.
+- Outer whitespace is trimmed and identifiers stay strings, preserving punctuation and leading zeros. Exact duplicates across retained fields collapse. All conflicting rows for a repeated identifier are excluded from linkage pending review. Rows without a recall number remain outside the recall catalog, including standalone safety warnings. Missing and conflicting rows are counted in the manifest and remain in the raw downloads.
+- Product and brand names receive HTML entity decoding, Unicode NFKC, case folding, punctuation normalization, and placeholder cleanup. Manufacturer keys also strip common legal suffixes. Missing manufacturer values remain missing. Recall manufacturers are taken from the `Manufacturers` field. The pipeline does not infer manufacturers from importers, distributors, or heading text.
+- Incident model values retain token separators. The linker extracts mixed letter–digit codes and compacts punctuation for exact comparisons. Valid UPC/GTIN values are normalized to 14 digits. Serial numbers and submitter metadata are excluded.
+- Report, publication, and recall dates are parsed as calendar dates. Missing or invalid dates are counted. Publication dates are retained for timing diagnostics. Incident narratives are excluded from the processing fields and outputs. Recall descriptions contribute identifier and ranking evidence.
 
-V2 preserves existing date and identifier confidence rules and adds normalized edit similarity, product name trigram Jaccard and TF-IDF cosine over clipped product and narrative text. The vocabulary is fitted on the recall catalog. Document cosine breaks ties after existing rank criteria. The positive-only reference cannot estimate false-link frequency.
+## Match evidence and labels
 
-The dashboard displays a stratified candidate sample. SQLite `decisions` stores report and recall IDs, candidate snapshot SHA-256, decision, reviewer, optional note and UTC timestamp. Decisions append independently of generated labels. Training uses a separately supplied historical CSV.
+The existing linker blocks by rare product and manufacturer tokens, mixed model codes, and checksum-valid GTINs. The usual shortlist includes up to 18 candidates. Identifier matches can extend that list. The default eligibility gate is 1 to 365 days after the report date. The command accepts `--horizon` for sensitivity analysis.
 
-DuckDB's `incidents` relation uses `report_date`, `category`, `manufacturer` and nullable binary `label_recalled`. Its `candidates` relation uses `report_id` and `confidence`. Dashboard confidence counts describe the review sample. CLI summaries cover the full run. The supported inputs lack a validated severity field.
+Date-eligible exact GTIN matches or exact model matches with brand or manufacturer corroboration can qualify as high confidence. Lexical matches use product token overlap, string similarity, manufacturer agreement, and brand agreement. The default high and review lexical thresholds are 0.82 and 0.57. The audit also records edit similarity, character trigram overlap, recall-document TF-IDF cosine, rejection reasons, and rank. Confidence tiers are rules, with no calibrated probability interpretation.
 
-## Verified V2 replay
+A single high candidate creates a heuristic positive. Several high candidates leave the report unlabeled. An absent candidate, rejected candidate, or manually rejected pair leaves the report outcome unresolved. Verified report-level labels require independent evidence, including sufficient catalog and follow-up coverage for any negative outcome. The official files supply no such labels. Reviewer decisions are appended to a separate SQLite ledger, keyed to the candidate sample SHA-256, and require further adjudication before they inform supervised labels.
 
-V2 processed 65,058 cleaned incident reports and 9,623 cleaned recall records. It generated 1,144,551 candidate pairs against approximately 626 million possible Cartesian pairs. Among these candidates, 148 received high confidence and 207 received review status. High-confidence uniqueness yielded 146 proxy positives, with competing high candidates kept unresolved.
+| Output | Contents |
+| --- | --- |
+| `summary.json` | Shareable counts, yearly volume, diagnostics, evaluation status, and input provenance |
+| `observations.csv` | Local normalized reports, `heuristic_label`, `heuristic_recall_id`, reserved nullable `verified_label`, and `label_status` |
+| `recalls.csv` | Local normalized recall catalog |
+| `candidates.csv` | Local ranked candidate pairs and evidence |
+| `review_sample.csv` | Local high-scoring examples within each tier for inspection |
 
-Of 416 prior reference pairs, 207 fell inside the date gate. V2 surfaced 204 of these 207 date-eligible pairs, including 158 at rank 1 and 180 in the top three. Three were absent from the shortlist. Of the surfaced eligible reference pairs, 115 received high confidence, 18 received review status and 71 were rejected by the confidence rules. The replay measures agreement with historical candidate references and therefore cannot estimate the rate of false matches or missed true matches. The input and reference hashes agree with the archived identifier-aware run.
+The bundled dashboard defaults to aggregate snapshot data and an interactive fictional linkage example. For private review on loopback, explicitly set `RECALLGUARD_CANDIDATES` to the generated sample. Keep the record-level artifacts and review ledger local. Raw exports and derived records can contain contextual identifiers. See the [SaferProducts terms](https://www.saferproducts.gov/Business/Acknowledge?source=signIn) and [CPSC privacy notice](https://www.cpsc.gov/About-CPSC/Policies-Statements-and-Directives/Privacy-Policy).
 
-[Aggregate V2 replay](../results/metrics/v2-linkage.json) · [Historical identifier-aware replay](../results/metrics/linkage_reference_benchmark.json)
+## Evaluation
+
+See the [official-export run report](CPSC_SNAPSHOT_REPORT.md). The historical CSV, linkage audit, and model benchmarks are documented in the [historical model evaluation](MODEL_EVALUATION.md). Use the CLI's explicit `train --data data/training_data.csv` path for historical replication only.

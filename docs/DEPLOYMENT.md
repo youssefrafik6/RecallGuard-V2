@@ -4,14 +4,12 @@ Run from the repository root with Python 3.11 or 3.13. On macOS, XGBoost may req
 
 ```bash
 python -m pip install -r requirements-dev.txt -e .
-export RECALLGUARD_DATA=data/training_data.csv
-export RECALLGUARD_MODEL=results/runs/chronological.joblib
 uvicorn recallguard.api:app --host 127.0.0.1
 # In a second shell
 streamlit run dashboard/app.py --server.address 127.0.0.1
 ```
 
-Set those paths only when the files are available. Missing prerequisites return HTTP 503 on dependent endpoints. Invalid inference bodies return HTTP 422.
+Set `RECALLGUARD_SUMMARY` to a completed raw snapshot summary to replace the bundled dashboard data. The default demo uses aggregate data and fictional examples. `RECALLGUARD_CANDIDATES` enables record-level review on a private, loopback deployment. Set `RECALLGUARD_DATA` and `RECALLGUARD_MODEL` only for local historical API and scoring comparisons. Missing prerequisites return HTTP 503 on dependent endpoints. Invalid inference bodies return HTTP 422.
 
 | Endpoint | Response |
 | --- | --- |

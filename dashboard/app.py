@@ -13,7 +13,6 @@ from pydantic import ValidationError
 
 from recallguard.analytics import aggregate
 from recallguard.batch import read_batch
-from recallguard.data import TARGET, load_incidents
 from recallguard.inference import (
     LIMITATION,
     configured_model,
@@ -23,6 +22,7 @@ from recallguard.inference import (
 )
 from recallguard.inference import IncidentRequest as Input
 from recallguard.linkage import LinkageConfig, link
+from recallguard.raw import SCHEMA_VERSION
 from recallguard.review import ReviewDecision, record_review
 
 ROOT = Path(os.getenv("RECALLGUARD_WORKSPACE", Path(__file__).resolve().parents[1]))
@@ -45,19 +45,12 @@ def model(path: str, modified: int):
 
 
 @st.cache_data
-def dataset(path: Path):
-    return load_incidents(path, labeled=True)
-
-
-def spreadsheet_safe(value):
-    """Keep formula-like text inert when a downloaded CSV opens in a spreadsheet."""
-    if isinstance(value, str) and value.lstrip().startswith(("=", "+", "-", "@")):
-        return "'" + value
-    return value
+def snapshot_summary(path: Path, modified: int):
+    return json.loads(path.read_text())
 
 
 @st.cache_data
-def candidate_demo():
+def candidate_demo(horizon_days: int):
     incidents = pd.DataFrame(
         [
             {
@@ -87,7 +80,7 @@ def candidate_demo():
             },
         ]
     )
-    return link(incidents, recalls, LinkageConfig())
+    return link(incidents, recalls, LinkageConfig(horizon_days=horizon_days))
 
 
 path = os.getenv("RECALLGUARD_MODEL", "")
@@ -99,7 +92,7 @@ page = st.sidebar.radio(
     "Explore",
     [
         "Overview",
-        "Recall risk assessment",
+        "Historical association scoring",
         "Batch analysis",
         "Dataset explorer",
         "Record linkage",
@@ -108,102 +101,69 @@ page = st.sidebar.radio(
         "About",
     ],
 )
-st.sidebar.caption("Local model loaded" if bundle else "No local model configured")
+st.sidebar.caption("Historical model loaded" if bundle else "No local model configured")
 st.title(page if page != "Overview" else "Consumer product recall analysis")
 st.caption(
     "Retrospective analysis of links between consumer incident reports and CPSC recalls."
 )
 
 if page in {"Overview", "Dataset explorer"}:
+    configured = os.getenv("RECALLGUARD_SUMMARY")
+    summary_path = (
+        Path(configured)
+        if configured
+        else ROOT / "results/metrics/cpsc-raw-2026-11-26.json"
+    )
     try:
-        data_path = Path(
-            os.getenv("RECALLGUARD_DATA", str(ROOT / "data/training_data.csv"))
-        )
-        data = dataset(data_path)
+        summary = snapshot_summary(summary_path, summary_path.stat().st_mtime_ns)
+        if (
+            not isinstance(summary, dict)
+            or summary.get("schema_version") != SCHEMA_VERSION
+        ):
+            raise ValueError("Unsupported CPSC summary schema")
     except (OSError, ValueError):
-        data = None
-        st.info(
-            "Set RECALLGUARD_DATA to a local historical CSV to enable dataset analytics."
-        )
+        summary = None
+        st.info("Set RECALLGUARD_SUMMARY to the summary.json produced by prepare-raw.")
 
 if page == "Overview":
-    if data is not None:
-        summary = aggregate(data, "summary").iloc[0]
+    if summary is not None:
         left, middle, right = st.columns(3)
-        left.metric("Labeled observations", f"{summary.reports:,}")
-        middle.metric("Recall-linked labels", f"{summary.linked_reports:,}")
-        right.metric("Linked share", f"{data[TARGET].mean():.1%}")
-    st.graphviz_chart(
-        """
-        digraph {
-            rankdir=LR;
-            bgcolor="transparent";
-            node [shape=box, style="rounded,filled", color="#76A8A5",
-                  fillcolor="#F0F6F5", fontcolor="#173039", fontname="Helvetica"];
-            edge [color="#086D6A"];
-            "CPSC exports" -> "Ranked candidates" -> "Review ledger";
-            "Historical labels" -> "Offline evaluation" -> "Model artifact" -> "API and dashboard";
-        }
-        """
-    )
-    st.subheader("From public reports to review priorities")
+        left.metric("Incident reports", f"{summary['incidents']['retained_rows']:,}")
+        middle.metric("Recall records", f"{summary['recalls']['retained_rows']:,}")
+        right.metric("Heuristic links", f"{summary['labels']['heuristic']:,}")
+        st.caption(
+            "Source: local CPSC snapshot"
+            if configured
+            else "Source: CPSC snapshot downloaded November 26, 2026"
+        )
     st.write(
-        "CPSC incident reports and recall listings have no shared product identifier. "
-        "RecallGuard shows how candidate links create labels and how a classifier ranks historical associations."
+        "RecallGuard ranks candidate links between submitted incident reports and "
+        "CPSC recalls. The Record linkage page demonstrates how the ranking works."
     )
     st.info(
-        "The original capstone cites about 39,946 incident reports and 9,666 recall records. "
-        "The historical labeled subset was sampled for the original analysis."
-    )
-    if bundle:
-        metadata = bundle["metadata"]
-        report = metadata["comparison"][metadata["selected"]]
-        st.subheader("Loaded model holdout")
-        st.write(f"{metadata['selected']} · {metadata['design']} split")
-        left, right = st.columns(2)
-        left.metric("F1", f"{report['f1']:.3f}")
-        right.metric("Average precision", f"{report['average_precision']:.3f}")
-    st.warning(
-        "A high score indicates similarity to historical linked observations. "
-        "Future recall and actual hazard require separate evidence."
+        "The official exports supply no verified outcome labels for supervised evaluation."
     )
 
 elif page == "Dataset explorer":
-    if data is None:
+    if summary is None:
         st.stop()
-    filters, results = st.columns([1, 3])
-    with filters:
-        categories = st.multiselect("Category", sorted(set(data.category) - {""}))
-        maker = st.text_input("Manufacturer contains")
-        labels = st.multiselect("Historical linkage label", [0, 1], default=[0, 1])
-    view = data.loc[data[TARGET].isin(labels)]
-    if categories:
-        view = view.loc[view.category.isin(categories)]
-    if maker:
-        view = view.loc[view.manufacturer.str.contains(maker, case=False, regex=False)]
-    with results:
-        st.subheader(f"{len(view):,} matching reports")
-        st.bar_chart(aggregate(view, "categories").head(12), x="category", y="reports")
-        st.bar_chart(
-            aggregate(view, "manufacturers").head(12), x="manufacturer", y="reports"
-        )
-        st.line_chart(aggregate(view, "trends"), x="month", y="reports")
-        st.bar_chart(view[TARGET].value_counts())
-        columns = [
-            "report_date",
-            "category",
-            "manufacturer",
-            "product",
-            "description",
-            TARGET,
-        ]
-        st.dataframe(view[columns], hide_index=True, width="stretch")
-        st.download_button(
-            "Download filtered reports",
-            view[columns].map(spreadsheet_safe).to_csv(index=False),
-            "recallguard.csv",
-            "text/csv",
-        )
+    st.subheader("Incident reports by report year")
+    annual = pd.Series(summary["reports_by_year"], name="Reports").sort_index()
+    if annual.empty:
+        st.info("No years meet the publication threshold for this snapshot.")
+    else:
+        st.bar_chart(annual)
+    st.caption("Years with fewer than 10 reports are omitted.")
+    st.subheader("Label status")
+    st.dataframe(pd.Series(summary["labels"], name="Reports"), width="stretch")
+    st.subheader("Candidate confidence")
+    st.dataframe(
+        pd.Series(summary["linkage"]["confidence_counts"], name="Pairs"),
+        width="stretch",
+    )
+    st.caption(
+        "Confidence reflects linkage rules. Linkage precision and recall require independent review."
+    )
 
 elif page == "Record linkage":
     st.info("Synthetic example. The product and recall identifiers are fictional.")
@@ -211,11 +171,10 @@ elif page == "Record linkage":
         "DEMO-01 reports a Maple Trail lithium lantern. Two candidates share product terms. "
         "The solar lantern listing is rejected because its announcement precedes the report."
     )
-    st.dataframe(candidate_demo(), hide_index=True, width="stretch")
-    audit_path = Path(
-        os.getenv("RECALLGUARD_CANDIDATES", ROOT / "data/processed/review_sample.csv")
-    )
-    if audit_path.is_file():
+    horizon = st.slider("Days after report eligible for linkage", 1, 365, 365)
+    st.dataframe(candidate_demo(horizon), hide_index=True, width="stretch")
+    review_sample_path = os.getenv("RECALLGUARD_CANDIDATES")
+    if review_sample_path and (audit_path := Path(review_sample_path)).is_file():
         st.subheader("Local CPSC candidate audit")
         snapshot = audit_path.read_bytes()
         preview = pd.read_csv(
@@ -288,7 +247,7 @@ elif page == "About":
 
 elif bundle is None and page != "Model performance":
     st.info(
-        "Train a model with the CLI and set RECALLGUARD_MODEL to its trusted bundle before launching."
+        "Optional historical scoring view. Configure a trusted historical model to use it."
     )
 
 elif page == "Batch analysis":
@@ -320,7 +279,7 @@ elif page == "Batch analysis":
                 "text/csv",
             )
 
-elif page == "Recall risk assessment":
+elif page == "Historical association scoring":
     with st.form("assessment"):
         product = st.text_input("Product description", max_chars=16000)
         description = st.text_area("Incident description", max_chars=16000)
@@ -365,14 +324,15 @@ elif page == "Model performance":
         for path in sorted((ROOT / "results/metrics").glob("v2-*.json"))
         if path.stem in {"v2-random", "v2-group", "v2-chronological"}
     }
-    sources = (["Loaded model"] if bundle else []) + list(reports)
+    st.info("Historical proxy benchmarks from the old sampled dataset.")
+    sources = (["Loaded historical model"] if bundle else []) + list(reports)
     if not sources:
         st.info("Train a model or add a V2 benchmark report to view performance.")
         st.stop()
     source = st.selectbox("Evaluation run", sources)
     metadata = (
         bundle["metadata"]
-        if source == "Loaded model"
+        if source == "Loaded historical model"
         else json.loads(reports[source].read_text())
     )
     comparisons = metadata["comparison"]
