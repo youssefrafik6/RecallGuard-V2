@@ -3,9 +3,9 @@
 from contextlib import closing
 from pathlib import Path
 from sqlite3 import connect
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
 
 class ReviewDecision(BaseModel):
@@ -13,7 +13,9 @@ class ReviewDecision(BaseModel):
     report_id: str = Field(min_length=1, max_length=240)
     recall_id: str = Field(min_length=1, max_length=240)
     decision: Literal["match", "non_match", "uncertain"]
-    reviewer: str = Field(min_length=1, max_length=80)
+    reviewer: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)
+    ]
     note: str = Field(default="", max_length=1000)
 
 
