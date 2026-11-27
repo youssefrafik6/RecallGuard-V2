@@ -4,9 +4,19 @@ RecallGuard connects U.S. Consumer Product Safety Commission incident reports wi
 
 **70,000 incident reports** · **10,098 retained recall listings** · **1,231,033 candidate pairs** · **168 heuristic links** · **0 independently verified outcomes**
 
-[Live Streamlit preview](https://recallguard-v2-portfolio.streamlit.app/) · [Deployment guide](docs/DEPLOYMENT.md#streamlit-community-cloud) · [Snapshot report](docs/CPSC_SNAPSHOT_REPORT.md) · [Independent review](docs/INDEPENDENT_REVIEW.md)
+[Public Streamlit dashboard](https://recallguard-v2-demo.streamlit.app/) · [Deployment guide](docs/DEPLOYMENT.md#streamlit-community-cloud) · [Snapshot report](docs/CPSC_SNAPSHOT_REPORT.md) · [Independent review](docs/INDEPENDENT_REVIEW.md)
 
 ![RecallGuard public demo showing aggregate CPSC metrics and the data pipeline](screenshots/public-overview.jpg)
+
+## Try the fictional catalog
+
+- **Interactive product matching** ranks candidates for a fictional report. Start from an example and adjust the product, identifiers, or date window.
+- **Batch analysis** runs three sample reports or accepts a fictional CSV of up to 50 rows and 64 KiB. Download ranked results, including rows with no candidates. Uploaded text stays out of the result file.
+- **Explainability** shows the linker's actual feature values, date eligibility, confidence rule, and ranking order. Scores measure similarity. The public tools require no model file.
+
+[Fictional batch results](screenshots/public-batch-matching.jpg) · [Matching evidence](screenshots/public-linkage-explanation.jpg)
+
+![Interactive product matching with a fictional lantern and ranked candidates](screenshots/public-product-matching.jpg)
 
 ## How it works
 
