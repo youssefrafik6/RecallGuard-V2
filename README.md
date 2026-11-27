@@ -1,4 +1,4 @@
-# RecallGuard V2 — Consumer Product Safety Intelligence Platform
+# RecallGuard V2 | Consumer Product Safety Intelligence Platform
 
 RecallGuard connects U.S. Consumer Product Safety Commission incident reports with candidate recall listings. It preserves the matching evidence for review and shows what historical models could generalize across products and time.
 
