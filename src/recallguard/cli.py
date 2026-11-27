@@ -1,7 +1,6 @@
 """Command-line entry points for data preparation, training and prediction."""
 
 import argparse
-import hashlib
 import json
 import logging
 import sys
@@ -20,20 +19,20 @@ from recallguard.linkage import (
     reference_coverage,
     review_sample,
 )
+from recallguard.raw import fingerprint, prepare_raw
 from recallguard.temporal_audit import audit_temporal
 from recallguard.training import FEATURE_SETS, train
-
-
-def fingerprint(path: Path) -> str:
-    with path.open("rb") as source:
-        return hashlib.file_digest(source, "sha256").hexdigest()
 
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
     parser = argparse.ArgumentParser(prog="recallguard")
     commands = parser.add_subparsers(required=True, dest="command")
-    prepare = commands.add_parser("prepare")
+    raw = commands.add_parser("prepare-raw", help="Process official CPSC exports")
+    for field in ("incident-zip", "recalls", "out"):
+        raw.add_argument(f"--{field}", required=True, type=Path)
+    raw.add_argument("--horizon", type=int, default=365)
+    prepare = commands.add_parser("prepare", help="Legacy CSV linkage workflow")
     for field in ("incidents", "recalls", "out"):
         prepare.add_argument(f"--{field}", required=True, type=Path)
     prepare.add_argument("--high", type=float, default=0.82)
@@ -49,8 +48,8 @@ def main() -> None:
     temporal.add_argument("--data", type=Path, default=Path("data/training_data.csv"))
     temporal.add_argument("--group-campaigns", action="store_true")
     temporal.add_argument("--linked-observations", type=Path)
-    fit = commands.add_parser("train")
-    fit.add_argument("--data", type=Path, default=Path("data/training_data.csv"))
+    fit = commands.add_parser("train", help="Reproduce historical proxy benchmarks")
+    fit.add_argument("--data", type=Path, required=True, help="Historical labeled CSV")
     fit.add_argument("--out", type=Path, default=Path("results/runs"))
     fit.add_argument(
         "--design", choices=["random", "group", "chronological", "all"], default="all"
@@ -70,7 +69,19 @@ def main() -> None:
         sub = commands.add_parser(name)
         sub.add_argument("--trusted-model", required=True, type=Path)
     args = parser.parse_args()
-    if args.command == "prepare":
+    if args.command == "prepare-raw":
+        print(
+            json.dumps(
+                prepare_raw(
+                    args.incident_zip,
+                    args.recalls,
+                    args.out,
+                    LinkageConfig(horizon_days=args.horizon),
+                ),
+                indent=2,
+            )
+        )
+    elif args.command == "prepare":
         incidents, recalls = load_incidents(args.incidents), load_recalls(args.recalls)
         config = LinkageConfig(
             high=args.high, review=args.review, horizon_days=args.horizon
