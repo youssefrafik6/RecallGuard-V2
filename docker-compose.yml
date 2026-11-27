@@ -22,7 +22,8 @@ services:
       - ./:/workspace:ro
       - reviews:/home/recallguard
     environment:
-      RECALLGUARD_DATA: ${RECALLGUARD_DATA:-}
+      RECALLGUARD_SUMMARY: ${RECALLGUARD_SUMMARY:-}
+      RECALLGUARD_CANDIDATES: ${RECALLGUARD_CANDIDATES:-}
       RECALLGUARD_MODEL: ${RECALLGUARD_MODEL:-}
       RECALLGUARD_WORKSPACE: /workspace
       RECALLGUARD_REVIEWS: /home/recallguard/reviews.sqlite
