@@ -52,3 +52,7 @@ The bundled dashboard defaults to aggregate snapshot data and an interactive fic
 ## Evaluation
 
 See the [official-export run report](CPSC_SNAPSHOT_REPORT.md). The historical CSV, linkage audit, and model benchmarks are documented in the [historical model evaluation](MODEL_EVALUATION.md). Use the CLI's explicit `train --data data/training_data.csv` path for historical replication only.
+
+## Archived export replay
+
+An archived CPSC export run read 65,058 incidents and 9,666 recall listings, retained 9,623 recall IDs, and scored 1,144,551 candidate pairs. With model and UPC/GTIN evidence, 146 reports met the unique high-confidence rule. The older-audit recovery check found 204 of 207 date-eligible candidates. The text-only configuration surfaced 170 eligible pairs.
