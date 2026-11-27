@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "sources": {
+    "incidents": {
+      "url": "https://www.saferproducts.gov/SPDB.zip",
+      "sha256": "80bd81dca1bc43d0917fec5ea7bf81c6b63888db2606f7f080362714d9f5b5af",
+      "bytes": 39343070,
+      "member_sha256": "40fa9d8da2aea910f9e86ca7349863b74bc56a0ecf4654954b94e02c06f6ecbc",
+      "encoding": "cp1252"
+    },
+    "recalls": {
+      "url": "https://www.cpsc.gov/s3fs-public/recall-data/recalls_recall_listing.csv",
+      "sha256": "7060ea2c02a53d959e93413c5ac57346bf0a9277c0ae9566c562db08e44684c1",
+      "bytes": 18520077,
+      "encoding": "utf-8-sig"
+    }
+  },
+  "config": {
+    "high": 0.82,
+    "review": 0.57,
+    "max_block": 75,
+    "max_candidates": 18,
+    "horizon_days": 365
+  },
+  "incidents": {
+    "source_rows": 70000,
+    "missing_identifier_rows": 0,
+    "duplicate_rows_collapsed": 0,
+    "conflicting_rows_excluded": 0,
+    "conflicting_identifiers": 0,
+    "retained_rows": 70000,
+    "missing_product": 0,
+    "missing_manufacturer": 0,
+    "dates": {
+      "report_date": {
+        "missing_or_invalid": 0,
+        "earliest": "2011-03-11",
+        "latest": "2026-11-08"
+      },
+      "publication_date": {
+        "missing_or_invalid": 0,
+        "earliest": "2011-07-26",
+        "latest": "2026-11-25"
+      }
+    }
+  },
+  "recalls": {
+    "source_rows": 10141,
+    "missing_identifier_rows": 3,
+    "duplicate_rows_collapsed": 7,
+    "conflicting_rows_excluded": 33,
+    "conflicting_identifiers": 16,
+    "retained_rows": 10098,
+    "missing_product": 529,
+    "missing_manufacturer": 7131,
+    "dates": {
+      "recall_date": {
+        "missing_or_invalid": 0,
+        "earliest": "1973-06-07",
+        "latest": "2026-11-12"
+      }
+    }
+  },
+  "linkage": {
+    "candidate_pairs": 1231033,
+    "confidence_counts": {
+      "high": 170,
+      "review": 250,
+      "rejected": 1230613
+    },
+    "reports_with_candidates": 69882,
+    "reports_without_candidates": 118,
+    "reports_with_multiple_high_candidates": 1,
+    "high_pairs_with_gtin": 7,
+    "high_pairs_with_model": 159,
+    "heuristic_links_by_publication_timing": {
+      "recall_after_publication": 137,
+      "recall_on_or_before_publication": 31,
+      "publication_date_unavailable": 0
+    }
+  },
+  "reports_by_year": {
+    "2011": 3829,
+    "2012": 6837,
+    "2013": 5186,
+    "2014": 4957,
+    "2015": 4381,
+    "2016": 4140,
+    "2017": 4188,
+    "2018": 3078,
+    "2019": 3033,
+    "2020": 3314,
+    "2021": 3938,
+    "2022": 3673,
+    "2023": 3803,
+    "2024": 4029,
+    "2025": 4595,
+    "2026": 7019
+  },
+  "labels": {
+    "verified": 0,
+    "heuristic": 168,
+    "unlabeled": 69832
+  },
+  "evaluation": {
+    "status": "insufficient_verified_labels",
+    "verified_positives": 0,
+    "verified_negatives": 0
+  }
+}

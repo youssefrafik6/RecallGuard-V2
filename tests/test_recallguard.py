@@ -234,7 +234,7 @@ def test_streamlit_pages(monkeypatch, artifact, tmp_path):
         "Explainability",
         "Model performance",
         "About",
-        "Recall risk assessment",
+        "Historical association scoring",
     ):
         page.sidebar.radio[0].set_value(view).run()
         assert not page.exception

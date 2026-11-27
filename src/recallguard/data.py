@@ -1,5 +1,6 @@
 """CPSC ingestion and deterministic normalization shared by training and linkage."""
 
+import csv
 import logging
 import re
 import unicodedata
@@ -68,25 +69,45 @@ def manufacturer_key(value: str) -> str:
 
 
 def read_export(
-    path: Path, mapping: dict[str, str], required: set[str]
+    path: Path,
+    mapping: dict[str, str],
+    required: set[str],
+    *,
+    strict: bool = False,
+    encoding: str = "utf-8-sig",
 ) -> pd.DataFrame:
     """Read the supported exports, including the CPSC incident disclaimer preamble."""
-    with path.open(encoding="utf-8-sig", errors="replace") as source:
+    with path.open(encoding=encoding, errors="replace") as source:
         skip = int(source.readline().lstrip('"').startswith("Disclaimer:"))
     headers = pd.read_csv(
-        path, skiprows=skip, nrows=0, encoding_errors="replace"
+        path, skiprows=skip, nrows=0, encoding=encoding, encoding_errors="replace"
     ).columns
     missing = required.difference(headers)
     if missing:
         raise ValueError(f"{path.name} is missing columns {sorted(missing)}")
+    if strict:
+        with path.open(encoding=encoding, newline="") as source:
+            if skip:
+                next(source)
+            reader = csv.reader(source, strict=True)
+            header = next(reader, [])
+            if len(header) != len(set(header)):
+                raise ValueError(f"{path.name} has duplicate column names")
+            width = len(header)
+            for row in reader:
+                if row and len(row) != width:
+                    raise ValueError(
+                        f"{path.name} has the wrong field count at line {reader.line_num}"
+                    )
     frame = pd.read_csv(
         path,
-        usecols=lambda name: name in mapping or name == TARGET,
+        usecols=lambda name: name in mapping or (not strict and name == TARGET),
         dtype=str,
         keep_default_na=False,
         skiprows=skip,
-        encoding_errors="replace",
-        on_bad_lines="warn",
+        encoding=encoding,
+        encoding_errors="strict" if strict else "replace",
+        on_bad_lines="error" if strict else "warn",
     ).rename(columns=mapping)
     for field in mapping.values():
         if field not in frame:
