@@ -4,7 +4,7 @@ RecallGuard connects U.S. Consumer Product Safety Commission incident reports wi
 
 **70,000 incident reports** · **10,098 retained recall listings** · **1,231,033 candidate pairs** · **168 heuristic links** · **0 independently verified outcomes**
 
-[Run the demo](docs/DEPLOYMENT.md#streamlit-community-cloud) · [Snapshot report](docs/CPSC_SNAPSHOT_REPORT.md) · [Independent review](docs/INDEPENDENT_REVIEW.md)
+[Live Streamlit preview](https://recallguard-v2-portfolio.streamlit.app/) · [Deployment guide](docs/DEPLOYMENT.md#streamlit-community-cloud) · [Snapshot report](docs/CPSC_SNAPSHOT_REPORT.md) · [Independent review](docs/INDEPENDENT_REVIEW.md)
 
 ![RecallGuard public demo showing aggregate CPSC metrics and the data pipeline](screenshots/public-overview.jpg)
 
