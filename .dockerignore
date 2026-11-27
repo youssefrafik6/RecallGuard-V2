@@ -5,6 +5,10 @@
 !src/**
 !dashboard/
 !dashboard/app.py
+!dashboard/public.py
+!results/
+!results/metrics/
+!results/metrics/*.json
 !.streamlit/
 !.streamlit/config.toml
 src/**/__pycache__/

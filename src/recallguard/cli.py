@@ -19,6 +19,7 @@ from recallguard.linkage import (
     reference_coverage,
     review_sample,
 )
+from recallguard.linkage_validation import evaluate_pairs, sample_pairs
 from recallguard.raw import fingerprint, prepare_raw
 from recallguard.temporal_audit import audit_temporal
 from recallguard.training import FEATURE_SETS, train
@@ -28,6 +29,18 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
     parser = argparse.ArgumentParser(prog="recallguard")
     commands = parser.add_subparsers(required=True, dest="command")
+    sample = commands.add_parser(
+        "sample-review", help="Draw a stratified local linkage review sample"
+    )
+    sample.add_argument("--snapshot", type=Path, required=True)
+    sample.add_argument("--out", type=Path, required=True)
+    sample.add_argument("--seed", type=int, default=42)
+    sample.add_argument("--per-stratum", type=int, default=50)
+    evaluate = commands.add_parser(
+        "evaluate-review", help="Summarize independent pair decisions"
+    )
+    evaluate.add_argument("--sample", type=Path, required=True)
+    evaluate.add_argument("--review", type=Path, action="append", default=[])
     raw = commands.add_parser("prepare-raw", help="Process official CPSC exports")
     for field in ("incident-zip", "recalls", "out"):
         raw.add_argument(f"--{field}", required=True, type=Path)
@@ -69,7 +82,16 @@ def main() -> None:
         sub = commands.add_parser(name)
         sub.add_argument("--trusted-model", required=True, type=Path)
     args = parser.parse_args()
-    if args.command == "prepare-raw":
+    if args.command == "sample-review":
+        print(
+            json.dumps(
+                sample_pairs(args.snapshot, args.out, args.seed, args.per_stratum),
+                indent=2,
+            )
+        )
+    elif args.command == "evaluate-review":
+        print(json.dumps(evaluate_pairs(args.sample, args.review), indent=2))
+    elif args.command == "prepare-raw":
         print(
             json.dumps(
                 prepare_raw(

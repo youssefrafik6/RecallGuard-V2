@@ -11,6 +11,7 @@ COPY src ./src
 RUN pip install --no-cache-dir --no-deps .
 COPY dashboard ./dashboard
 COPY .streamlit ./.streamlit
+COPY results/metrics/*.json ./results/metrics/
 USER recallguard
 EXPOSE 8000 8501
 CMD ["uvicorn", "recallguard.api:app", "--host", "0.0.0.0"]

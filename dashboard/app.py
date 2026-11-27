@@ -9,23 +9,28 @@ from sqlite3 import Error as SQLiteError
 
 import pandas as pd
 import streamlit as st
-from pydantic import ValidationError
 
-from recallguard.analytics import aggregate
-from recallguard.batch import read_batch
-from recallguard.inference import (
-    LIMITATION,
-    configured_model,
-    global_features,
-    predict,
-    predict_batch,
-)
-from recallguard.inference import IncidentRequest as Input
 from recallguard.linkage import LinkageConfig, link
 from recallguard.raw import SCHEMA_VERSION
-from recallguard.review import ReviewDecision, record_review
 
-ROOT = Path(os.getenv("RECALLGUARD_WORKSPACE", Path(__file__).resolve().parents[1]))
+public_demo = globals().get("PUBLIC_DEMO", False)
+ROOT = Path(__file__).resolve().parents[1]
+if not public_demo:
+    ROOT = Path(os.getenv("RECALLGUARD_WORKSPACE", ROOT))
+    from pydantic import ValidationError
+
+    from recallguard.analytics import aggregate
+    from recallguard.batch import read_batch
+    from recallguard.inference import (
+        LIMITATION,
+        configured_model,
+        global_features,
+        predict,
+        predict_batch,
+    )
+    from recallguard.inference import IncidentRequest as Input
+    from recallguard.review import ReviewDecision, record_review
+
 st.set_page_config(page_title="RecallGuard V2", page_icon="▣", layout="wide")
 st.markdown(
     """
@@ -83,13 +88,13 @@ def candidate_demo(horizon_days: int):
     return link(incidents, recalls, LinkageConfig(horizon_days=horizon_days))
 
 
-path = os.getenv("RECALLGUARD_MODEL", "")
+path = "" if public_demo else os.getenv("RECALLGUARD_MODEL", "")
 modified = Path(path).stat().st_mtime_ns if path and Path(path).is_file() else 0
-bundle = model(path, modified)
+bundle = model(path, modified) if path else None
 st.sidebar.title("RecallGuard V2")
 st.sidebar.caption("CPSC incident research")
 page = st.sidebar.radio(
-    "Explore",
+    "Views",
     [
         "Overview",
         "Historical association scoring",
@@ -101,14 +106,20 @@ page = st.sidebar.radio(
         "About",
     ],
 )
-st.sidebar.caption("Historical model loaded" if bundle else "No local model configured")
+st.sidebar.caption(
+    "Public demo · read-only"
+    if public_demo
+    else "Historical model loaded"
+    if bundle
+    else "Local mode · no model configured"
+)
 st.title(page if page != "Overview" else "Consumer product recall analysis")
 st.caption(
-    "Retrospective analysis of links between consumer incident reports and CPSC recalls."
+    "Record linkage and retrospective analysis of U.S. consumer product safety reports."
 )
 
 if page in {"Overview", "Dataset explorer"}:
-    configured = os.getenv("RECALLGUARD_SUMMARY")
+    configured = None if public_demo else os.getenv("RECALLGUARD_SUMMARY")
     summary_path = (
         Path(configured)
         if configured
@@ -126,6 +137,10 @@ if page in {"Overview", "Dataset explorer"}:
         st.info("Set RECALLGUARD_SUMMARY to the summary.json produced by prepare-raw.")
 
 if page == "Overview":
+    st.write(
+        "RecallGuard connects CPSC incident reports with candidate recall listings. "
+        "Explore the evidence behind each candidate and see how historical models were evaluated."
+    )
     if summary is not None:
         left, middle, right = st.columns(3)
         left.metric("Incident reports", f"{summary['incidents']['retained_rows']:,}")
@@ -136,10 +151,14 @@ if page == "Overview":
             if configured
             else "Source: CPSC snapshot downloaded November 26, 2026"
         )
-    st.write(
-        "RecallGuard ranks candidate links between submitted incident reports and "
-        "CPSC recalls. The Record linkage page demonstrates how the ranking works."
-    )
+    st.subheader("From source files to review")
+    st.graphviz_chart("""
+        digraph {
+            graph [rankdir=LR, bgcolor="transparent"]
+            node [shape=box, style="rounded,filled", color="#6c9c97", fillcolor="#edf7f5"]
+            "Official CPSC exports" -> "Normalize and block" -> "Rank and preserve evidence" -> "Independent review"
+        }
+    """)
     st.info(
         "The official exports supply no verified outcome labels. "
         "Historical model evaluation uses a separate sample with linkage labels."
@@ -173,8 +192,15 @@ elif page == "Record linkage":
         "The solar lantern listing is rejected because its announcement precedes the report."
     )
     horizon = st.slider("Days after report eligible for linkage", 1, 365, 365)
-    st.dataframe(candidate_demo(horizon), hide_index=True, width="stretch")
-    review_sample_path = os.getenv("RECALLGUARD_CANDIDATES")
+    example = candidate_demo(horizon)
+    columns = ["rank", "recall_id", "days_to_recall", "confidence", "score", "reason"]
+    st.dataframe(example[columns], hide_index=True, width="stretch")
+    with st.expander("Matching evidence"):
+        st.write(
+            "The lexical score combines product tokens, name similarity, manufacturer, and brand evidence."
+        )
+        st.dataframe(example.drop(columns=columns), hide_index=True, width="stretch")
+    review_sample_path = None if public_demo else os.getenv("RECALLGUARD_CANDIDATES")
     if review_sample_path and (audit_path := Path(review_sample_path)).is_file():
         st.subheader("Local CPSC candidate audit")
         snapshot = audit_path.read_bytes()
@@ -247,7 +273,8 @@ elif page == "About":
 
 elif bundle is None and page != "Model performance":
     st.info(
-        "Optional historical scoring view. Configure a trusted historical model to use it."
+        "This view requires a trusted historical model in a local deployment. "
+        "The Model performance page shows recorded benchmarks without a model file."
     )
 
 elif page == "Batch analysis":
