@@ -1,6 +1,6 @@
 streamlit==1.67.0
-pandas==2.2.3
-numpy==2.2.3
+pandas==2.3.3
+numpy==2.5.5
 scipy==1.18.1
 scikit-learn==1.9.1
 rapidfuzz==3.14.6
