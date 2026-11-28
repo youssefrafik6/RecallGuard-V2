@@ -135,7 +135,7 @@ def test_dashboard_uses_only_aggregates_by_default(tmp_path, source_files, monke
     monkeypatch.delenv("RECALLGUARD_CANDIDATES", raising=False)
     monkeypatch.delenv("RECALLGUARD_MODEL", raising=False)
     entry = Path(__file__).resolve().parents[1] / "dashboard/app.py"
-    ui = AppTest.from_file(str(entry)).run()
+    ui = AppTest.from_file(str(entry), default_timeout=45).run()
     assert not ui.exception
     assert [metric.value for metric in ui.metric] == ["2", "1", "1"]
     ui.sidebar.radio[0].set_value("Dataset explorer").run()

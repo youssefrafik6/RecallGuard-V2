@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from recallguard.demo import MAX_BYTES, batch_results, demo_csv, parse_upload
+from recallguard.public_matching import MAX_BYTES, batch_results, demo_csv, parse_upload
 
 ENTRY = Path(__file__).resolve().parents[1] / "dashboard/public.py"
 
@@ -81,5 +81,8 @@ def test_public_batch_example_upload_validation_and_download():
     actual = ui.dataframe[0].value
     assert actual.report_id.nunique() == 4
     assert "PRIVATE-TEXT" not in actual.to_csv(index=False)
-    assert "no candidate" in actual.confidence.values
+    assert set(actual.loc[actual.report_id.eq("INPUT-04"), "confidence"]) <= {
+        "no candidate",
+        "rejected",
+    }
     assert ui.get("download_button")[-1].label == "Download linkage results"

@@ -10,7 +10,7 @@ from sqlite3 import Error as SQLiteError
 import pandas as pd
 import streamlit as st
 
-from recallguard.demo import (
+from recallguard.public_matching import (
     FIELDS,
     MAX_BYTES,
     OVERVIEW,
